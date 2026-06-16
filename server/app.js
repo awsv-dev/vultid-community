@@ -12,8 +12,14 @@ const { Canvas, Image, ImageData } = canvas;
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const mrzScan = require('mrz-scan');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const db = require('./db/connection');
 const queries = require('./db/queries');
+const { adminAuthMiddleware } = require('./middleware/auth');
+const authRoutes = require('./routes/auth');
+const subscriptionRoutes = require('./routes/subscriptions');
+const licenseRoutes = require('./routes/licenses');
+const wompiRoutes = require('./routes/wompi');
 
 const app = express();
 const PORT = process.env.PORT || 8105;
@@ -137,6 +143,7 @@ app.use((req, res, next) => {
 app.set('trust proxy', true);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use(cookieParser());
 app.use(express.static('public'));
 app.use('/models', express.static(path.join(__dirname, 'models')));
 
@@ -179,12 +186,21 @@ app.get('/', (req, res) => {
             reconocimiento: 'POST /recognize/:uuid',
             verificacion: 'POST /verify-id/:uuid',
             demo: 'POST /login-user-test/:uuid',
-            admin_suscriptores: 'GET /api/suscriptores'
+            auth: 'POST /api/auth/register, /api/auth/login, /api/auth/refresh',
+            plans: 'GET /api/subscriptions/plans',
+            admin_suscriptores: 'GET /api/suscriptores (admin auth required)'
         }
     });
 });
 
-app.get('/api/suscriptores', async (req, res) => {
+// --- AUTH ROUTES ---
+app.use('/api/auth', authRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/licenses', licenseRoutes);
+app.use('/api/wompi', wompiRoutes);
+
+// --- ADMIN ROUTES (protected) ---
+app.get('/api/suscriptores', adminAuthMiddleware, async (req, res) => {
     try {
         const suscriptores = await queries.listSuscriptores();
         res.json({ success: true, data: suscriptores });
@@ -194,7 +210,7 @@ app.get('/api/suscriptores', async (req, res) => {
     }
 });
 
-app.post('/api/suscriptores', async (req, res) => {
+app.post('/api/suscriptores', adminAuthMiddleware, async (req, res) => {
     try {
         const nuevo = await queries.createSuscriptor(req.body);
         log('INFO', 'Suscriptor creado', { faceapp_id: nuevo.faceapp_id });
@@ -205,7 +221,7 @@ app.post('/api/suscriptores', async (req, res) => {
     }
 });
 
-app.put('/api/suscriptores/:uuid', async (req, res) => {
+app.put('/api/suscriptores/:uuid', adminAuthMiddleware, async (req, res) => {
     try {
         const actualizado = await queries.updateSuscriptor(req.params.uuid, req.body);
         if (!actualizado) return res.status(404).json({ success: false, error: 'Suscriptor no encontrado.' });
@@ -218,7 +234,7 @@ app.put('/api/suscriptores/:uuid', async (req, res) => {
     }
 });
 
-app.delete('/api/suscriptores/:uuid', async (req, res) => {
+app.delete('/api/suscriptores/:uuid', adminAuthMiddleware, async (req, res) => {
     try {
         const eliminado = await queries.deleteSuscriptor(req.params.uuid);
         if (!eliminado) return res.status(404).json({ success: false, error: 'Suscriptor no encontrado.' });

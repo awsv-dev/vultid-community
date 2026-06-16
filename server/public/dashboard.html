@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VULT ID - Mi Panel</title>
+    <style>
+        :root { --primary: #21436d; --accent: #5bfce9; --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #fff; --text-muted: #8b949e; --success: #3fb950; --warning: #d29922; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+        .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar h1 { font-size: 1.2rem; color: var(--accent); }
+        .topbar .user-info { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; }
+        .topbar .logout { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .topbar .logout:hover { border-color: var(--accent); color: var(--accent); }
+        .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+        .card h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .card .value { font-size: 1.8rem; font-weight: 700; }
+        .card .value.accent { color: var(--accent); }
+        .card .sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-trial { background: rgba(210, 153, 34, 0.2); color: var(--warning); }
+        .badge-active { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+        .license-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .license-box code { font-family: monospace; font-size: 1.1rem; letter-spacing: 1px; }
+        .btn-copy { background: var(--accent); color: var(--bg); border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+        .btn-copy:hover { opacity: 0.9; }
+        .section { margin-bottom: 24px; }
+        .section h2 { font-size: 1.1rem; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { color: var(--text-muted); font-weight: 500; }
+        .empty { color: var(--text-muted); font-size: 0.9rem; padding: 24px; text-align: center; }
+        .btn-primary { background: var(--accent); color: var(--bg); border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { opacity: 0.9; }
+        .not-logged { text-align: center; padding: 60px 20px; }
+        .not-logged a { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>VULT ID</h1>
+        <div class="user-info">
+            <span id="userName">Cargando...</span>
+            <button class="logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="loginPrompt" class="not-logged" style="display:none">
+            <h2>No has iniciado sesión</h2>
+            <p style="margin: 16px 0"><a href="/login.html">Iniciar Sesión</a> | <a href="/register.html">Crear Cuenta</a></p>
+        </div>
+
+        <div id="dashboard" style="display:none">
+            <div class="grid">
+                <div class="card">
+                    <h3>Estado</h3>
+                    <div class="value" id="subStatus">-</div>
+                    <div class="sub" id="subPlan">-</div>
+                </div>
+                <div class="card">
+                    <h3>Días Restantes</h3>
+                    <div class="value accent" id="daysRemaining">-</div>
+                    <div class="sub" id="expiryDate">-</div>
+                </div>
+                <div class="card">
+                    <h3>Licencia</h3>
+                    <div class="value" style="font-size:1rem" id="licenseKey">-</div>
+                </div>
+            </div>
+
+            <div class="section" id="licenseSection" style="display:none">
+                <h2>Tu Licencia</h2>
+                <div class="card">
+                    <p style="color:var(--text-muted);margin-bottom:8px">Usa esta licencia para activar VULT ID en tu aplicación:</p>
+                    <div class="license-box">
+                        <code id="licenseFull">-</code>
+                        <button class="btn-copy" onclick="copyLicense()">Copiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Planes Disponibles</h2>
+                <div class="grid" id="plansContainer">Cargando planes...</div>
+            </div>
+
+            <div class="section">
+                <h2>Historial de Pagos</h2>
+                <div class="card">
+                    <table>
+                        <thead><tr><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead>
+                        <tbody id="paymentsBody"><tr><td colspan="3" class="empty">No hay pagos registrados</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('vultid_token');
+        const user = JSON.parse(localStorage.getItem('vultid_user') || 'null');
+
+        if (!token || !user) {
+            document.getElementById('loginPrompt').style.display = 'block';
+        } else {
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('userName').textContent = user.name;
+            loadDashboard();
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/subscriptions/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+
+                if (data.subscription) {
+                    const sub = data.subscription;
+                    document.getElementById('subStatus').textContent = sub.status === 'trial' ? 'Trial' : sub.status === 'active' ? 'Activo' : sub.status;
+                    document.getElementById('subStatus').innerHTML += ` <span class="badge badge-${sub.status}">${sub.status}</span>`;
+                    document.getElementById('subPlan').textContent = sub.plan_name;
+                    document.getElementById('daysRemaining').textContent = sub.current_period_end ? Math.ceil((new Date(sub.current_period_end) - new Date()) / 86400000) : '-';
+                    document.getElementById('expiryDate').textContent = sub.current_period_end ? 'Expira: ' + new Date(sub.current_period_end).toLocaleDateString() : '';
+                }
+
+                if (data.licenses && data.licenses.length > 0) {
+                    const lic = data.licenses[0];
+                    document.getElementById('licenseFull').textContent = lic.license_key;
+                    document.getElementById('licenseKey').textContent = lic.license_key;
+                    document.getElementById('licenseSection').style.display = 'block';
+                }
+
+                if (data.payments && data.payments.length > 0) {
+                    const tbody = document.getElementById('paymentsBody');
+                    tbody.innerHTML = data.payments.map(p => `
+                        <tr>
+                            <td>${new Date(p.created_at).toLocaleDateString()}</td>
+                            <td>$${p.amount}</td>
+                            <td>${p.status}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                loadPlans();
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+                if (err.message.includes('401') || err.message.includes('expired')) {
+                    logout();
+                }
+            }
+        }
+
+        async function loadPlans() {
+            try {
+                const res = await fetch('/api/subscriptions/plans');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('plansContainer').innerHTML = data.data.map(p => `
+                        <div class="card">
+                            <h3>${p.name}</h3>
+                            <div class="value">$${p.price_monthly}</div>
+                            <div class="sub">por mes</div>
+                            <p style="margin:12px 0;font-size:0.85rem;color:var(--text-muted)">${p.description}</p>
+                            <button class="btn-primary" style="width:100%;margin-top:8px" onclick="selectPlan('${p.slug}')">Seleccionar</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) { console.error('Plans load error:', err); }
+        }
+
+        async function selectPlan(slug) {
+            if (!confirm('¿Deseas suscribirte a este plan?')) return;
+            try {
+                const res = await fetch('/api/subscriptions/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ plan_slug: slug, billing_cycle: 'monthly' })
+                });
+                const data = await res.json();
+                if (data.success && data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    alert(data.error || 'Error al crear suscripción');
+                }
+            } catch (err) { alert('Error de conexión'); }
+        }
+
+        function copyLicense() {
+            const key = document.getElementById('licenseFull').textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                const btn = document.querySelector('.btn-copy');
+                btn.textContent = '¡Copiado!';
+                setTimeout(() => btn.textContent = 'Copiar', 2000);
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('vultid_token');
+            localStorage.removeItem('vultid_user');
+            if (token) {
+                fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }).catch(() => {});
+            }
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

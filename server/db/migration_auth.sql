@@ -1,55 +1,15 @@
--- VULT ID Database Schema
--- PostgreSQL 16
+-- VULT ID Migration: Add auth, plans, subscriptions, licenses tables
+-- Run manually against existing database
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Tabla principal de suscriptores
-CREATE TABLE IF NOT EXISTS suscriptores (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    faceapp_id UUID UNIQUE NOT NULL,
-    faceapp_url_api TEXT,
-    faceapp_url_redirect TEXT,
-    faceapp_tipo INTEGER DEFAULT 0 CHECK (faceapp_tipo IN (0, 1)),
-    faceapp_token_api TEXT,
-    faceapp_auth_method VARCHAR(50) DEFAULT 'bearer',
-    faceapp_auth_username VARCHAR(100),
-    faceapp_origin_allowed TEXT DEFAULT '*',
-    faceapp_match_threshold FLOAT DEFAULT 0.6 CHECK (faceapp_match_threshold BETWEEN 0.0 AND 1.0),
-    faceapp_liveness_type VARCHAR(30) DEFAULT 'smile' CHECK (faceapp_liveness_type IN ('smile', 'surprise', 'mouth_open', 'head_movement', 'button', 'button:gesture', 'button:head_movement')),
-    faceapp_show_landmarks BOOLEAN DEFAULT true,
-    faceapp_show_expressions BOOLEAN DEFAULT true,
-    faceapp_es_demo BOOLEAN DEFAULT false,
-    activo BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Add faceapp_show_expressions to suscriptores if not exists
+DO $$ BEGIN
+    ALTER TABLE suscriptores ADD COLUMN faceapp_show_expressions BOOLEAN DEFAULT true;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
 
--- Tabla de logs de transacciones
-CREATE TABLE IF NOT EXISTS transacciones (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    suscriptor_id UUID NOT NULL REFERENCES suscriptores(id) ON DELETE CASCADE,
-    tipo_operacion VARCHAR(50) NOT NULL,
-    exitoso BOOLEAN DEFAULT false,
-    distancia_facial FLOAT,
-    ip_address INET,
-    user_agent TEXT,
-    payload_metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Tabla de configuración del sistema
-CREATE TABLE IF NOT EXISTS sistema_config (
-    clave VARCHAR(100) PRIMARY KEY,
-    valor TEXT NOT NULL,
-    descripcion TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- ========================================
--- TABLAS DE AUTENTICACIÓN Y SUSCRIPCIONES
--- ========================================
-
--- Usuarios (compradores de suscripciones)
+-- Users table
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -66,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Planes disponibles
+-- Plans table
 CREATE TABLE IF NOT EXISTS plans (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -79,7 +39,7 @@ CREATE TABLE IF NOT EXISTS plans (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Suscripciones activas
+-- Subscriptions table
 CREATE TABLE IF NOT EXISTS subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -94,7 +54,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Licencias generadas
+-- Licenses table
 CREATE TABLE IF NOT EXISTS licenses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -107,7 +67,7 @@ CREATE TABLE IF NOT EXISTS licenses (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Historial de pagos
+-- Payments table
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -120,7 +80,7 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Refresh tokens para JWT
+-- Refresh tokens table
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -129,13 +89,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- ========================================
--- ÍNDICES
--- ========================================
-
-CREATE INDEX IF NOT EXISTS idx_suscriptores_faceapp_id ON suscriptores(faceapp_id);
-CREATE INDEX IF NOT EXISTS idx_transacciones_suscriptor_id ON transacciones(suscriptor_id);
-CREATE INDEX IF NOT EXISTS idx_transacciones_created_at ON transacciones(created_at DESC);
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_licenses_user_id ON licenses(user_id);
@@ -143,10 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_licenses_license_key ON licenses(license_key);
 CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 
--- ========================================
--- TRIGGERS
--- ========================================
-
+-- Triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -155,31 +106,23 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_suscriptores_updated_at
-    BEFORE UPDATE ON suscriptores
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+DO $$ BEGIN
+    CREATE TRIGGER update_users_updated_at
+        BEFORE UPDATE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TRIGGER update_users_updated_at
-    BEFORE UPDATE ON users
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+DO $$ BEGIN
+    CREATE TRIGGER update_subscriptions_updated_at
+        BEFORE UPDATE ON subscriptions
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TRIGGER update_subscriptions_updated_at
-    BEFORE UPDATE ON subscriptions
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
--- ========================================
--- DATOS INICIALES
--- ========================================
-
-INSERT INTO sistema_config (clave, valor, descripcion) VALUES
-    ('api_version', '2.0.0', 'Versión actual de la API'),
-    ('cache_ttl_minutes', '60', 'Tiempo de vida del caché en minutos'),
-    ('face_match_threshold_default', '0.6', 'Umbral por defecto para coincidencia facial')
-ON CONFLICT (clave) DO NOTHING;
-
+-- Seed plans
 INSERT INTO plans (name, slug, description, price_monthly, price_annual, features) VALUES
     ('Login Intranet', 'login-basic', 'Reconocimiento facial para login de usuarios', 35.00, 420.00, '{"login": true, "dui": false, "max_devices": 1}'),
     ('ID Validation', 'combo-enterprise', 'Login + Verificación DUI + Liveness completo', 65.00, 780.00, '{"login": true, "dui": true, "max_devices": 3}')

@@ -32,6 +32,17 @@ services:
       - DEMOGNITION_ENDPOINT=${DEMOGNITION_ENDPOINT:-/login-user-test/}
       - RECOGNITION_ENDPOINT=${RECOGNITION_ENDPOINT:-/recognize/}
       - VERIFICATION_ENDPOINT=${VERIFICATION_ENDPOINT:-/verify-id/}
+      - JWT_SECRET=${JWT_SECRET:-vultid-jwt-secret-change-in-production}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-vultid2024}
+      - APP_URL=${APP_URL:-http://localhost:3000}
+      - WOMPI_APP_ID=${WOMPI_APP_ID}
+      - WOMPI_API_SECRET=${WOMPI_API_SECRET}
+      - WOMPI_API_URL=${WOMPI_API_URL:-https://api.wompi.sv}
+      - WOMPI_AUTH_URL=${WOMPI_AUTH_URL:-https://id.wompi.sv/connect/token}
+      - ZOHO_API_KEY=${ZOHO_API_KEY}
+      - ZOHO_FROM_EMAIL=${ZOHO_FROM_EMAIL}
+      - ZOHO_FROM_NAME=${ZOHO_FROM_NAME:-VULT ID}
     ports:
       - "${API_PORT:-8105}:8105"
     depends_on:
