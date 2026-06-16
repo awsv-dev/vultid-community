@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconocimiento Facial - Captura de Video</title>
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/faceid.css">
+    <link rel="stylesheet" href="lib/sweetalert2/sweetalert2.min.css">
+    <link rel="stylesheet" href="lib/driver.js/dist/driver.css">
+    <style>
+        /* Tema Matrix - Solucionado para que no oculte el video y estilo PRO */
+        html[data-theme="matrix"], [data-theme="matrix"] body {
+            background-color: #000000 !important;
+            color: #00ff41 !important;
+        }
+        [data-theme="matrix"] #app-container {
+            background-color: #050505 !important;
+            border: 1px solid #00ff41 !important;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3) inset;
+        }
+        
+        /* Botones de acción principales (Start Verification, Recognition, Demognition) */
+        [data-theme="matrix"] #axn-btns-section {
+            background: rgba(0, 20, 0, 0.6) !important;
+            border: 3px solid #00ff41 !important;
+        }
+        [data-theme="matrix"] #start-demognition-btn,
+        [data-theme="matrix"] #start-recognition-btn,
+        [data-theme="matrix"] #start-verification-btn {
+            background: #000000 !important;
+            border: 1px solid #00ff41 !important;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.4) !important;
+            border-radius: 50% !important;
+        }
+        [data-theme="matrix"] #start-demognition-btn::after,
+        [data-theme="matrix"] #start-recognition-btn::after,
+        [data-theme="matrix"] #start-verification-btn::after {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2300ff41' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z'/%3E%3C/svg%3E") no-repeat center !important;
+            background-size: contain !important;
+        }
+        [data-theme="matrix"] #start-demognition-btn:not(:disabled):hover,
+        [data-theme="matrix"] #start-recognition-btn:not(:disabled):hover,
+        [data-theme="matrix"] #start-verification-btn:not(:disabled):hover {
+            background: #00ff41 !important;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8) !important;
+        }
+        [data-theme="matrix"] #start-demognition-btn:not(:disabled):hover::after,
+        [data-theme="matrix"] #start-recognition-btn:not(:disabled):hover::after,
+        [data-theme="matrix"] #start-verification-btn:not(:disabled):hover::after {
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23000000' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z'/%3E%3C/svg%3E") no-repeat center !important;
+            background-size: contain !important;
+        }
+        
+        /* Botones de cámara y modo */
+        [data-theme="matrix"] #switch-camera-btn,
+        [data-theme="matrix"] #capture-upload-toggle {
+            background: rgba(0, 20, 0, 0.7) !important;
+            border: 1px solid #00ff41 !important;
+        }
+        [data-theme="matrix"] #switch-camera-btn img,
+        [data-theme="matrix"] #capture-upload-toggle img {
+            filter: invert(53%) sepia(91%) saturate(1210%) hue-rotate(85deg) brightness(118%) contrast(119%) !important;
+        }
+
+        /* Resto de elementos de la interfaz */
+        [data-theme="matrix"] button,
+        [data-theme="matrix"] .btn-primary {
+            background-color: #000000 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+            box-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+            font-family: 'Courier New', Courier, monospace !important;
+            border-radius: 2px !important;
+            text-transform: uppercase;
+        }
+        [data-theme="matrix"] button:hover,
+        [data-theme="matrix"] .btn-primary:hover {
+            background-color: #00ff41 !important;
+            color: #000000 !important;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
+        }
+        [data-theme="matrix"] .dui-slot {
+            background-color: rgba(0, 20, 0, 0.7) !important;
+            border: 1px dashed #00ff41 !important;
+        }
+        [data-theme="matrix"] #status-bar {
+            background-color: rgba(0, 0, 0, 0.85) !important;
+            border-top: 1px solid #00ff41 !important;
+        }
+        [data-theme="matrix"] #status.text-warning {
+            color: #00ff41 !important;
+        }
+        
+        /* Modales (SweetAlert2) Matrix PRO */
+        [data-theme="matrix"] .swal2-popup {
+            background-color: #050505 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2) !important;
+        }
+        [data-theme="matrix"] .swal2-title, [data-theme="matrix"] .swal2-html-container, [data-theme="matrix"] .swal2-content {
+            color: #00ff41 !important;
+        }
+        [data-theme="matrix"] .swal2-input, [data-theme="matrix"] .swal2-file, [data-theme="matrix"] .swal2-select {
+            background-color: #000000 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+        }
+        [data-theme="matrix"] .swal2-confirm, [data-theme="matrix"] .swal2-cancel {
+            background-color: #000000 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+            box-shadow: 0 0 5px rgba(0, 255, 65, 0.5) !important;
+            border-radius: 2px !important;
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+        [data-theme="matrix"] .swal2-confirm:hover, [data-theme="matrix"] .swal2-cancel:hover {
+            background-color: #00ff41 !important;
+            color: #000000 !important;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8) !important;
+        }
+    </style>
+</head>
+
+<body style="transition: background 0.3s;">
+    <div class="container-fluid p-0">
+        <div class="resizable-box" id="resizable-box">
+            <div class="handle" id="handle-right"></div>
+        </div>
+
+        <div id="app-container" class="row overflow-hidden bg-dark">
+            <div id="dui-section-guide"></div>
+            <canvas id="overlay-canvas"></canvas>
+            <video id="video" width="100%" height="auto" autoplay muted playsinline></video>
+            <div id="zoom-container"
+                style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); height: 60%; z-index: 10;">
+                <input type="range" id="zoom-slider"
+                    style="writing-mode: vertical-lr; direction: rtl; width: 8px; height: 100%; background: rgba(255,255,255,0.3);"
+                    min="1" max="1" step="0.1" value="1">
+            </div>
+
+            <div id="status-bar">
+                <div id="status" class="text-warning">⦿</div>
+                <button id="switch-camera-btn" onclick="toggleCamara()"><img id="#camera-icon"
+                        src="images/icon/camera_rotate.png"></button>
+            </div>
+
+            <div id="action-buttons-wrapper">
+                <div id="axn-btns-section" class="container-fluid">
+                    <button id="start-recognition-btn" onclick="manejarAccionPrincipal(event)"
+                        disabled></button><!--Login Intranet-->
+                    <button id="start-demognition-btn" onclick="manejarAccionPrincipal(event)" disabled></button><!--login Test-->
+                    <button id="start-verification-btn" disabled></button><!--Iniciar Verificación-->
+                </div>
+            </div>
+
+            <div id="verification-identity-section">
+                <!--        CONTROL SWITCH        -->
+                <button id="capture-upload-toggle" class="switch-container" data-mode="upload">
+                    <img id="dui-toggle-img" src="images/icon/upload_mode.png" alt="">
+                </button>
+                <div id="identity-container" class="">
+                    <!--        CAPTURA DUI        -->
+                    <div id="capture-mode" class="dui-section capture-mode">
+                        <!--                    <div class="dragIt">&nbsp;</div>-->
+                        <div class="dui-capture-upload">
+                            <div class="dui-slot front" id="dui-front-preview">
+                                <button id="capture-front-btn"></button><!--Capturar DUI Frente-->
+                                <div class="placeholder-icon captured-icon"></div>
+                                <img id="captured-front-img" class="captured-image-preview"
+                                    src="images/dui/DUI_BG_F.png" alt="DUI Frente Capturado" style="display:none;">
+                            </div>
+                        </div>
+                        <div class="dui-capture-upload">
+                            <div class="dui-slot reverse" id="dui-back-preview">
+                                <button id="capture-back-btn"></button><!--Capturar DUI Reverso-->
+                                <div class="placeholder-icon captured-icon"></div>
+                                <img id="captured-back-img" class="captured-image-preview" src="images/dui/DUI_BG_R.png"
+                                    alt="DUI Reverso Capturado" style="display:none;">
+                            </div>
+                        </div>
+                    </div>
+                    <!--        CARGA DUI        -->
+                    <div id="upload-mode" class="dui-section upload-mode">
+                        <div class="dui-capture-upload">
+                            <div class="dui-slot front" id="upload-dui-front-preview">
+                                <div class="file-input-group">
+                                    <input class="form-control" type="file" id="upload-front-input"
+                                        accept="image/jpeg, image/png" disabled>
+                                    <label for="upload-front-input">&nbsp;</label>
+                                </div>
+                                <span id="upload-front-name" class="file-name">No se eligió ningún archivo</span>
+                                <div class="placeholder-icon uploaded-icon"></div>
+                                <img id="uploaded-front-img" class="captured-image-preview"
+                                    src="images/dui/DUI_BG_F.png" alt="DUI Frente Subido">
+                            </div>
+                        </div>
+                        <div class="dui-capture-upload">
+                            <div class="dui-slot reverse" id="upload-dui-back-preview">
+                                <div class="file-input-group">
+                                    <input class="form-control" type="file" id="upload-back-input"
+                                        accept="image/jpeg, image/png" disabled>
+                                    <label for="upload-back-input">&nbsp;</label>
+                                </div>
+                                <span id="upload-back-name" class="file-name">No se eligió ningún archivo</span>
+                                <div class="placeholder-icon uploaded-icon"></div>
+                                <img id="uploaded-back-img" class="captured-image-preview" src="images/dui/DUI_BG_R.png"
+                                    alt="DUI Reverso Subido" style="display:none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; font-size: 0.65rem; color: #8b95a5; padding: 4px; width: 100%; position: absolute; bottom: 0; left: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+                POWERED BY <a href="https://artywebsv.com" target="_blank" style="color: var(--accent, #5bfce9); font-weight: bold; text-decoration: none;">ARTYWEBSV</a>
+            </div>
+        </div>
+    </div>
+    <script src="lib/faceapi.js/face-api.min.js"></script>
+    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+    <script src="lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="lib/driver.js/dist/driver.js.iife.js"></script>
+    <script type="module">
+        import Tesseract from './lib/tesseract/tesseract.esm.min.js';
+
+        const driver = window.driver.js.driver;
+        const video = document.getElementById('video');
+        const overlayCanvas = document.getElementById('overlay-canvas');
+        const statusElement = document.getElementById('status');
+        const captureFrontButton = document.getElementById('capture-front-btn');
+        const captureBackButton = document.getElementById('capture-back-btn');
+        const duiFrontPreview = document.getElementById('dui-front-preview');
+        const duiBackPreview = document.getElementById('dui-back-preview');
+        const capturedFrontImg = document.getElementById('captured-front-img');
+        const capturedBackImg = document.getElementById('captured-back-img');
+        const uploadFrontInput = document.getElementById('upload-front-input');
+        const uploadBackInput = document.getElementById('upload-back-input');
+        const toggleSwitch = document.getElementById('capture-upload-toggle');
+        const duiToggleImg = document.getElementById('dui-toggle-img');
+        const startVerificationButton = document.getElementById('start-verification-btn');
+        const startRecognitionButton = document.getElementById('start-recognition-btn');
+        const startDemognitionButton = document.getElementById('start-demognition-btn');
+        const axnBtnsSection = document.getElementById('axn-btns-section');
+        const verificationIdentitySection = document.getElementById('verification-identity-section');
+        const appContainer = document.getElementById('app-container');
+        const duiCaptureSection = document.querySelector('.dui-section.capture-mode');
+        const duiUploadSection = document.querySelector('.dui-section.upload-mode');
+        let LIVENESS_CHECK_MOCK = false; // Mock para prueba de vida
+        const RAW_LIVENESS = (suscriptorConfig && suscriptorConfig.liveness_type) || 'smile';
+        const IS_BUTTON_MODE = RAW_LIVENESS.startsWith('button');
+        const LIVENESS_METHOD = IS_BUTTON_MODE ? (RAW_LIVENESS.split(':')[1] === 'gesture' ? 'smile' : RAW_LIVENESS.split(':')[1] || 'smile') : RAW_LIVENESS;
+        const LIVENESS_TYPE = IS_BUTTON_MODE ? 'button' : RAW_LIVENESS;
+        const SHOW_LANDMARKS = suscriptorConfig && suscriptorConfig.show_landmarks !== false;
+        const SHOW_EXPRESSIONS = suscriptorConfig && suscriptorConfig.show_expressions !== false;
+        const LIVENESS_INSTRUCTIONS = {
+            'smile': 'sonreír',
+            'surprise': 'expresar sorpresa',
+            'mouth_open': 'abrir la boca',
+            'head_movement': 'mover la cabeza de lado a lado'
+        };
+        // --- 1. Configuración de la API ---
+        const DEMOGNITION_ENDPOINT = `${BASE_DEMOGNITION_ENDPOINT + uuid}`; // /faceapi/recognize/${uuid}
+        const RECOGNITION_ENDPOINT = `${BASE_RECOGNITION_ENDPOINT + uuid}`; // /faceapi/recognize/${uuid}
+        const VERIFICATION_ENDPOINT = `${BASE_VERIFICATION_ENDPOINT + uuid}`; // /faceapi/verify-id/${uuid}
+        const uploadFrontName = document.getElementById('upload-front-name');
+        const uploadBackName = document.getElementById('upload-back-name');
+        const uploadedFrontImg = document.getElementById('uploaded-front-img');
+        const uploadedBackImg = document.getElementById('uploaded-back-img');
+        let extractedDui = '';
+        let currentStream = null;
+        let useFacingMode = "environment"; // "user" (frontal) o "environment" (trasera)
+        let esDemo = false;
+        // Variable global para el track de video
+        let videoTrack = null
+        let fotoReferenciaDemo = null; // Variable para guardar lo que mande el padre
+        let duiRecibido = null;
+        let sexo = null;
+        let yaSeDisparoAccion;
+
+        // Head movement tracking
+        let headPositions = [];
+        const HEAD_POSITION_SAMPLES = 15;
+        const HEAD_MOVEMENT_THRESHOLD = 0.06;
+        let livenessPassed = false;
+        let buttonLivenessActive = false;
+        let modelsLoaded = false;
+        let faceInterval = null;
+        let capturedDUIFrontBase64 = null;
+        let capturedDUIBackBase64 = null;
+
+        // Helper: fetch con retry automatico para rate limit (429)
+        async function fetchWithRetry(url, options, maxRetries = 2) {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                const response = await fetch(url, options);
+                if (response.status === 429 && attempt < maxRetries) {
+                    const data = await response.json().catch(() => ({}));
+                    const retryAfter = data.retryAfter || 10;
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'Limite de peticiones alcanzado',
+                        text: `Espera ${retryAfter} segundos...`,
+                        timer: retryAfter * 1000,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        grow: 'fullscreen',
+                        didOpen: () => { Swal.showLoading(); },
+                        willClose: () => { Swal.hideLoading(); }
+                    });
+                    continue;
+                }
+                return response;
+            }
+        }
+
+        /*draggableElement.addEventListener('mousedown', startDragging);
+        draggableElement.addEventListener('mouseup', stopDragging);
+    
+        function startDragging(e) {
+            e.preventDefault();
+            offsetX = e.clientX - draggableElement.getBoundingClientRect().left;
+            offsetY = e.clientY - draggableElement.getBoundingClientRect().top;
+            draggableElement.classList.add('dragging');
+            document.addEventListener('mousemove', dragElement);
+        }
+    
+        function dragElement(e) {
+            e.preventDefault();
+            let x = e.clientX - offsetX;
+            let y = e.clientY - offsetY;
+            draggableElement.style.left = x + 'px';
+            draggableElement.style.top = y + 'px';
+        }
+    
+        function stopDragging() {
+            draggableElement.classList.remove('dragging');
+            document.removeEventListener('mousemove', dragElement);
+        }*/
+
+        function isReadyForAction() {
+            const btnDUI = document.getElementById('start-verification-btn');
+            const btnReal = document.getElementById('start-recognition-btn');
+            const btnDemo = document.getElementById('start-demognition-btn');
+
+            if (btnDUI && btnDUI.style.display !== 'none') {
+                return !btnDUI.disabled; // True si DUI frontal y reverso están capturados
+            } else if (btnDemo && btnDemo.style.display !== 'none') {
+                return !!fotoReferenciaDemo; // True si ya se cargó la foto para el demo
+            } else if (btnReal && btnReal.style.display !== 'none') {
+                return true; // Login intranet normal no tiene prerrequisitos obligatorios
+            }
+            return false;
+        }
+
+        function mostrarTutorialInicial() {
+            if (suscriptorConfig && suscriptorConfig.tipo === 1) {
+                // Modo Verificación
+                if (suscriptorConfig.es_demo && (!capturedDUIFrontBase64 || !capturedDUIBackBase64)) {
+                    Swal.fire({
+                        title: 'Validación en Modo Demo',
+                        html: 'Para comenzar, captura o <b>sube las fotos del frente y reverso</b> de tu documento de identidad.<br><br>Una vez procesado, presiona el botón de acción para iniciar la prueba de vida.',
+                        icon: 'info',
+                        confirmButtonText: 'Entendido',
+                        allowOutsideClick: false
+                    });
+                } else if (!suscriptorConfig.es_demo && (!capturedDUIFrontBase64 || !capturedDUIBackBase64)) {
+                    Swal.fire({
+                        title: 'Validación de Documento',
+                        html: 'Por favor, aliste su documento de identidad y capture el <b>frente y reverso</b> según se le indique.<br><br>Al finalizar, siga las instrucciones para la prueba de vida.',
+                        icon: 'info',
+                        confirmButtonText: 'Iniciar',
+                        allowOutsideClick: false
+                    });
+                }
+            } else if (suscriptorConfig && suscriptorConfig.es_demo && !fotoReferenciaDemo) {
+                let text = 'Para comenzar, <b>sube una foto de referencia</b> en el panel lateral.<br><br>';
+                if (!LIVENESS_TYPE.startsWith('button')) {
+                    text += `Una vez subida, la prueba de vida comenzará automáticamente: solo deberás <b>${LIVENESS_INSTRUCTIONS[LIVENESS_TYPE]}</b>.`;
+                } else {
+                    text += 'Una vez subida, presiona el botón de iniciar y sigue las instrucciones.';
+                }
+                Swal.fire({
+                    title: '¡Bienvenido al modo Demo!',
+                    html: text,
+                    icon: 'info',
+                    confirmButtonText: 'Entendido',
+                    allowOutsideClick: false
+                });
+            } else if (suscriptorConfig && !suscriptorConfig.es_demo && !LIVENESS_TYPE.startsWith('button')) {
+                Swal.fire({
+                    title: 'Verificación de Identidad',
+                    html: `Para continuar, mantén tu rostro visible y <b>${LIVENESS_INSTRUCTIONS[LIVENESS_TYPE]}</b>.`,
+                    icon: 'info',
+                    confirmButtonText: 'Iniciar',
+                    allowOutsideClick: false
+                });
+            }
+        }
+
+        function dispararPorExpresion(expressions) {
+            if (yaSeDisparoAccion) return;
+            if (!isReadyForAction()) return;
+
+            // Si es head_movement, trackHeadMovement maneja el livenessPassed y dispara
+            if (LIVENESS_METHOD === 'head_movement') {
+                return;
+            }
+
+            // Si es modo botón, NO hacemos nada hasta que le den clic
+            if (LIVENESS_TYPE === 'button' && !buttonLivenessActive) {
+                return;
+            }
+
+            let triggered = false;
+
+            if (LIVENESS_METHOD === 'smile' && expressions.happy >= 0.95) triggered = true;
+            else if (LIVENESS_METHOD === 'surprise' && expressions.surprised >= 0.90) triggered = true;
+            else if (LIVENESS_METHOD === 'mouth_open' && expressions.surprised >= 0.85) triggered = true;
+
+            if (triggered) {
+                livenessPassed = true;
+                const statusEl = document.getElementById('status');
+                if (statusEl) { statusEl.textContent = '\u2713'; statusEl.style.color = '#34d399'; }
+                
+                if (faceInterval) { clearInterval(faceInterval); faceInterval = null; }
+                ejecutarDisparo();
+            }
+        }
+
+        function ejecutarDisparo() {
+            const btnDUI = document.getElementById('start-verification-btn');
+            const btnReal = document.getElementById('start-recognition-btn');
+            const btnDemo = document.getElementById('start-demognition-btn');
+
+            if (faceInterval) { clearInterval(faceInterval); faceInterval = null; }
+
+            if (btnDUI && !btnDUI.disabled && btnDUI.style.display !== 'none') {
+                yaSeDisparoAccion = true;
+                window.startVerification();
+            } else if (btnReal && !btnReal.disabled && btnReal.style.display !== 'none') {
+                yaSeDisparoAccion = true;
+                window.startRecognition();
+            } else if (btnDemo && !btnDemo.disabled && btnDemo.style.display !== 'none') {
+                yaSeDisparoAccion = true;
+                window.startDemognition();
+            }
+        }
+
+        function manejarAccionPrincipal(e) {
+            if (e) e.preventDefault();
+            if (yaSeDisparoAccion) return;
+
+            // Pre-validaciones
+            const btnDemo = document.getElementById('start-demognition-btn');
+            if (btnDemo && !btnDemo.disabled && btnDemo.style.display !== 'none') {
+                if (!fotoReferenciaDemo) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Sube primero una foto en el panel principal',
+                        icon: 'error',
+                        grow: 'fullscreen',
+                    });
+                    return;
+                }
+            }
+
+            if (LIVENESS_TYPE === 'button') {
+                if (!buttonLivenessActive) {
+                    buttonLivenessActive = true;
+                    livenessPassed = false;
+                    headPositions = [];
+                    
+                    let gestureName = LIVENESS_INSTRUCTIONS[LIVENESS_METHOD];
+
+                    Swal.fire({ icon: 'info', title: 'Prueba de vida', text: `Mira al frente y debes ${gestureName}.`, timer: 3000, showConfirmButton: false });
+                    return;
+                } else {
+                    let gestureName = LIVENESS_INSTRUCTIONS[LIVENESS_METHOD];
+
+                    Swal.fire({ icon: 'warning', title: 'Prueba de vida', text: `Aún estamos esperando que logres ${gestureName}.`, timer: 2500, showConfirmButton: false });
+                    return;
+                }
+            }
+
+            if (!livenessPassed) {
+                let gestureName = LIVENESS_INSTRUCTIONS[LIVENESS_TYPE];
+                Swal.fire({ icon: 'warning', title: 'Prueba de vida', text: `Debes ${gestureName} para la captura automática.`, timer: 2500, showConfirmButton: false });
+                return;
+            }
+
+            yaSeDisparoAccion = true;
+            ejecutarDisparo();
+        }
+
+        function trackHeadMovement(landmarks) {
+            if (livenessPassed) return;
+            if (!isReadyForAction()) return;
+            if (LIVENESS_TYPE === 'button' && !buttonLivenessActive) return;
+            if (LIVENESS_METHOD !== 'head_movement') return;
+
+            const nose = landmarks.positions[30];
+            const normalizedX = nose.x;
+            headPositions.push(normalizedX);
+            if (headPositions.length > HEAD_POSITION_SAMPLES) headPositions.shift();
+            if (headPositions.length < HEAD_POSITION_SAMPLES) return;
+
+            const range = Math.max(...headPositions) - Math.min(...headPositions);
+            if (range >= HEAD_MOVEMENT_THRESHOLD) {
+                livenessPassed = true;
+                const statusEl = document.getElementById('status');
+                if (statusEl) { statusEl.textContent = '\u2713'; statusEl.style.color = '#34d399'; }
+                Swal.fire({ icon: 'success', title: 'Prueba de vida completada', text: 'Movimiento de cabeza detectado.', timer: 2000, showConfirmButton: false, grow: 'fullscreen' });
+                
+                if (faceInterval) { clearInterval(faceInterval); faceInterval = null; }
+                ejecutarDisparo();
+            }
+        }
+
+        window.addEventListener("message", async (event) => {
+            // Seguridad: Filtra por el origen de tu app Next.js
+            // console.log('event.origin', event.origin);
+            // console.log('APP_ORIGIN', APP_ORIGIN);
+            if ((APP_ORIGIN !== "*") && (APP_ORIGIN !== event.origin)) {
+                // if (APP_ORIGIN !== "*"){
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ORIGEN DESCONOCIDO',
+                    text: 'Usted está tratando de acceder desde un origin desconocido.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    grow: 'fullscreen',
+                });
+                appContainer.remove();
+            } else {
+                if (event.data) {
+                    if (event.data.type === 'THEME_CHANGE') {
+                        document.documentElement.setAttribute('data-theme', event.data.payload);
+                    }
+                    // 1. RECIBIR LA FOTO DE PERFIL (Desde el SweetAlert del Padre)
+                    if (event.data.type === 'UPLOAD_PROFILE_SUCCESS') {
+                        fotoReferenciaDemo = event.data.payload.foto_perfil;
+                        startDemognitionButton.disabled = false; // Habilitamos el botón
+                        esDemo = true;
+                        console.log("Referencia inyectada para demo.");
+                    }
+                    // 2. RECIBIR DUI_DATA (Activación normal)
+                    if (event.data.type === 'DUI_DATA' && event.data.payload.dui) {
+                        duiRecibido = event.data.payload.dui;
+                        sexo = event.data.payload.sexo || 'M';
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'DUI: ' + duiRecibido,
+                        }).then(() => {
+                            loadDuiTutorial();
+                        });
+                        await iniciarCamara();
+                        initializeUI();
+                    }
+
+                    function loadDuiTutorial() {
+                        if (localStorage.getItem('vultid_skip_tutorial') === 'true') return;
+                        const driverObj = driver({
+                            showProgress: true,
+                            steps: [
+                                {
+                                    popover: {
+                                        title: 'CAPTURA DE DOCUMENTO',
+                                        description: 'Guía rápida para realizar tu validación de identidad con DUI.',
+                                        onNextClick: () => {
+                                            driverObj.moveNext();
+                                        },
+                                    },
+                                },
+                                {
+                                    element: "#capture-front-btn",
+                                    popover: {
+                                        title: "PARTE FRONTAL",
+                                        description: "Presiona aquí o sobre la guía para capturar el frente de tu documento."
+                                    }
+                                },
+                                {
+                                    element: "#capture-back-btn",
+                                    popover: {
+                                        title: "PARTE REVERSA",
+                                        description: "Presiona aquí para capturar el reverso de tu documento."
+                                    }
+                                },
+                                {
+                                    element: "#switch-camera-btn",
+                                    popover: {
+                                        title: "CAMBIAR CÁMARA",
+                                        description: "Intercambia entre cámaras. Recomendamos la trasera para el DUI y la frontal para tu rostro."
+                                    }
+                                },
+                                {
+                                    element: "#capture-upload-toggle",
+                                    popover: {
+                                        title: "¿FOTO O ARCHIVO?",
+                                        description: "Cambia entre tomar una foto en vivo o subir imágenes que ya tengas guardadas."
+                                    }
+                                },
+                                {
+                                    popover: {
+                                        title: '¡CASI TERMINAMOS!',
+                                        description: 'Una vez capturados ambos lados del DUI, se activará la <b>Prueba de Vida</b>. Para completarla, simplemente mira a la cámara y <b>sonríe</b>.<br><br><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#999;"><input type="checkbox" id="skip-tutorial-check" style="accent-color:#5bfce9;"> No volver a mostrar esta guía</label>',
+                                    }
+                                }
+                            ],
+                            onDestroyStarted: () => {
+                                const skipCheck = document.getElementById('skip-tutorial-check');
+                                if (skipCheck && skipCheck.checked) {
+                                    localStorage.setItem('vultid_skip_tutorial', 'true');
+                                }
+                                if (!driverObj.hasNextStep() || skipCheck?.checked || confirm("¿Estás segur@?")) {
+                                    driverObj.destroy();
+                                }
+                            },
+                        });
+
+                        driverObj.drive();
+                    }
+
+                    // --- 1. CARGA DE MODELOS (Usando la variable inyectada MODEL_URL) ---
+                    async function cargarModelosFaceApi() {
+                        try {
+                            if (modelsLoaded) return;
+                            // Cargamos los modelos desde la ruta que ya confirmamos que funciona
+                            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                            await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+
+                            modelsLoaded = true;
+                            console.log("✅ Modelos de face-api listos.");
+                        } catch (e) {
+                            console.error("❌ Error en face-api models:", e);
+                        }
+                    }
+
+                    // --- 2. EL BUCLE DE DIBUJO MEJORADO ---
+                    async function startFaceDetection() {
+                        if (!modelsLoaded || !video) return;
+
+                        // Función para ajustar el tamaño del canvas al del video visualizado
+                        const resizeCanvas = () => {
+                            const displaySize = {
+                                width: video.offsetWidth,
+                                height: video.offsetHeight
+                            };
+                            faceapi.matchDimensions(overlayCanvas, displaySize);
+                            return displaySize;
+                        };
+
+                        let displaySize = resizeCanvas();
+
+                        // Escuchar si la ventana cambia de tamaño (rotación de móvil)
+                        window.addEventListener('resize', () => {
+                            displaySize = resizeCanvas();
+                        });
+
+                        if (faceInterval) clearInterval(faceInterval);
+
+                        faceInterval = setInterval(async () => {
+                            // Validación de estado de video
+                            if (video.paused || video.ended || video.readyState !== 4) return;
+
+                            // Detección optimizada
+                            const detections = await faceapi.detectAllFaces(
+                                video,
+                                new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+                            ).withFaceLandmarks().withFaceExpressions();
+
+                            // Ajustamos los resultados a lo que el usuario ve en pantalla
+                            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+                            const ctx = overlayCanvas.getContext('2d');
+                            ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+                            if (resizedDetections.length > 0) {
+                                if (SHOW_LANDMARKS) {
+                                    faceapi.draw.drawFaceLandmarks(overlayCanvas, resizedDetections);
+                                }
+                                if (SHOW_EXPRESSIONS) {
+                                    faceapi.draw.drawFaceExpressions(overlayCanvas, resizedDetections);
+                                }
+                                dispararPorExpresion(resizedDetections[0].expressions);
+
+                                // Track head movement for liveness
+                                if (LIVENESS_METHOD === 'head_movement' && resizedDetections[0].landmarks) {
+                                    if (suscriptorConfig?.tipo !== 1 || (capturedDUIFrontBase64 && capturedDUIBackBase64)) {
+                                        trackHeadMovement(resizedDetections[0].landmarks);
+                                    }
+                                }
+
+                                // Cambiamos el estado de Liveness si hay un rostro
+                                LIVENESS_CHECK_MOCK = true;
+
+                                // Log de control (opcional, quitar en producción)
+                                // console.log("Gesto detectado:", resizedDetections[0].expressions.asSortedArray()[0].expression);
+                            } else {
+                                LIVENESS_CHECK_MOCK = false;
+                            }
+
+                            // Importante: Si tienes la guía del DUI, redibújala aquí para que no parpadee
+                            if (typeof dibujarGuiaDUI === 'function' && suscriptorConfig?.tipo === 1) {
+                                dibujarGuiaDUI();
+                            }
+                        }, 500);
+                    }
+
+                    // --- 3. INTEGRACIÓN EN INICIAR CÁMARA ---
+                    async function iniciarCamara() {
+                        if (currentStream) {
+                            currentStream.getTracks().forEach(track => track.stop());
+                        }
+
+                        const constraints = {
+                            video: {
+                                facingMode: useFacingMode,
+                                width: { ideal: 1920 },
+                                height: { ideal: 1080 }
+                            }
+                        };
+
+                        try {
+                            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                            videoTrack = currentStream.getVideoTracks()[0]; // Guardamos el track
+                            video.srcObject = currentStream;
+                            // --- CONFIGURACIÓN DEL ZOOM ---
+                            const capabilities = videoTrack.getCapabilities();
+                            const zoomContainer = document.getElementById('zoom-container');
+                            const zoomSlider = document.getElementById('zoom-slider');
+                            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--vultid-primary').trim();
+                            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--vultid-accent').trim();
+
+                            if (capabilities.zoom) {
+                                zoomContainer.style.display = 'block';
+                                zoomSlider.min = capabilities.zoom.min;
+                                zoomSlider.max = capabilities.zoom.max;
+                                zoomSlider.step = capabilities.zoom.step;
+                                zoomSlider.value = capabilities.zoom.min;
+
+                                zoomSlider.oninput = async () => {
+                                    try {
+                                        await videoTrack.applyConstraints({
+                                            advanced: [{ zoom: zoomSlider.value }]
+                                        });
+                                    } catch (e) {
+                                        console.error("Error aplicando zoom:", e);
+                                    }
+                                };
+                            } else {
+                                zoomContainer.style.display = 'none';
+                                console.warn("Zoom no soportado por este hardware/navegador.");
+                            }
+
+                            // Manejo de espejo (mismo código que antes)
+                            if (useFacingMode === "user") {
+                                video.classList.add('mirror-mode');
+                                overlayCanvas.classList.add('mirror-mode');
+                            } else {
+                                video.classList.remove('mirror-mode');
+                                overlayCanvas.classList.remove('mirror-mode');
+                            }
+
+                            // Dentro de tu función iniciarCamara()
+                            video.onloadedmetadata = () => {
+                                console.log("Video listo, iniciando IA...");
+                                if (modelsLoaded) {
+                                    startFaceDetection();
+                                } else {
+                                    cargarModelosFaceApi().then(startFaceDetection);
+                                }
+                            };
+
+                            video.play();
+                        } catch (err) {
+                            console.error("Error:", err);
+                        }
+                    }
+                    // Función para el botón "Cambiar Cámara"
+                    window.toggleCamara = async function () {
+                        useFacingMode = (useFacingMode === "user") ? "environment" : "user";
+                        // Detener tracks anteriores para liberar el hardware
+                        if (currentStream) {
+                            currentStream.getTracks().forEach(track => track.stop());
+                        }
+                        await iniciarCamara();
+                    }
+
+                    function dibujarGuiaDUI() {
+                        const ctx = overlayCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                        // Configuración del marco (un rectángulo en el centro)
+                        // const padding = 50;
+                        // const width = overlayCanvas.width - (padding * 2);
+                        // const height = width * 0.63; // Proporción estándar de una tarjeta ID/DUI
+                        // const x = padding;
+                        // const y = (overlayCanvas.height - height) / 2;
+                        // // Dibujar fondo semi-transparente
+                        // ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                        // ctx.fillRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                        // // "Cortar" el agujero del centro
+                        // ctx.clearRect(x, y, width, height);
+                        // // Dibujar borde del marco
+                        // ctx.strokeStyle = "#D4AF37"; // Tu color dorado
+                        // ctx.lineWidth = 4;
+                        // ctx.strokeRect(x, y, width, height);
+                        // // Texto de instrucción
+                        // ctx.fillStyle = "white";
+                        // ctx.font = "18px Arial";
+                        // ctx.textAlign = "center";
+                        // ctx.fillText("Coloca el frente de tu DUI aquí", overlayCanvas.width / 2, y - 20);
+                    }
+                    // Llama a esta función después de que el video inicie:
+                    video.onloadedmetadata = () => {
+                        overlayCanvas.width = video.videoWidth;
+                        overlayCanvas.height = video.videoHeight;
+                        dibujarGuiaDUI();
+                    };
+
+                    async function detectarYRecortarDUI(canvasOriginal) {
+                        const ctx = canvasOriginal.getContext('2d');
+                        const w = canvasOriginal.width;
+                        const h = canvasOriginal.height;
+                        // 1. Definimos el área donde DEBERÍA estar el DUI (según el marco guía)
+                        // Esto asegura que si hay ruido alrededor, lo ignoremos.
+                        const rectW = w * 0.8;
+                        const rectH = rectW * 0.63;
+                        const rectX = (w - rectW) / 2;
+                        const rectY = (h - rectH) / 2;
+                        // 2. Creamos un canvas de salida con la imagen "limpia"
+                        const cropCanvas = document.createElement('canvas');
+                        cropCanvas.width = 1200; // Resolución óptima para OCR
+                        cropCanvas.height = 756;
+                        const cropCtx = cropCanvas.getContext('2d');
+                        // 3. Aplicamos un ligero filtro de nitidez antes del recorte
+                        // cropCtx.filter = 'contrast(250%) grayscale(100%) brightness(175%)';
+                        // Dibujamos solo la parte del marco guía en el nuevo canvas
+                        cropCtx.drawImage(canvasOriginal, rectX, rectY, rectW, rectH, 0, 0, 1200, 756);
+                        return cropCanvas.toDataURL('image/png');
+                    }
+
+                    function initializeUI() {
+                        if (suscriptorConfig && suscriptorConfig.tipo === 1) { // Verificación de Identidad
+                            video.style.display = 'block';
+                            overlayCanvas.style.display = 'block';
+                            captureFrontButton.style.display = 'block';
+                            captureBackButton.style.display = 'block';
+                            startRecognitionButton.style.display = 'none';
+                            startDemognitionButton.style.display = 'none';
+                            startVerificationButton.style.display = 'block';
+                            startVerificationButton.addEventListener('click', manejarAccionPrincipal);
+                            toggleCaptureUploadMode();
+                        } else {
+                            // Login Facial (o cualquier otro tipo por defecto)
+                            captureFrontButton.style.display = 'none';
+                            captureBackButton.style.display = 'none';
+                            startRecognitionButton.style.display = suscriptorConfig.es_demo ? 'none' : 'block';
+                            startDemognitionButton.style.display = suscriptorConfig.es_demo ? 'block' : 'none';
+                            verificationIdentitySection.style.display = 'none';
+                            startVerificationButton.style.display = 'none';
+                            video.style.display = 'block';
+                            overlayCanvas.style.display = 'block';
+                        }
+
+                        // Mostrar sección de botones solo si el modo es de botón
+                        if (LIVENESS_TYPE === 'button') {
+                            axnBtnsSection.style.display = 'flex';
+                        } else {
+                            axnBtnsSection.style.display = 'none';
+                        }
+
+                        toggleSwitch.addEventListener('click', toggleCaptureUploadMode);
+
+                        captureFrontButton.addEventListener('click', () => captureDUI('front'));
+                        captureBackButton.addEventListener('click', () => captureDUI('back'));
+
+                        uploadFrontInput.addEventListener('change', (e) => uploadDUI('front', e.target.files[0]));
+                        uploadBackInput.addEventListener('change', (e) => uploadDUI('back', e.target.files[0]));
+
+                        duiFrontPreview.addEventListener('click', () => uploadFrontInput.click());
+                        duiBackPreview.addEventListener('click', () => uploadBackInput.click());
+
+                        updateStartVerificationButton();
+                    }
+                    // Funciones de Captura/Subida para Tipo 1
+                    async function captureDUI(side) {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = video.videoWidth;
+                        tempCanvas.height = video.videoHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+
+                        // Manejo de espejo para cámara frontal
+                        if (useFacingMode === "user") {
+                            tempCtx.translate(tempCanvas.width, 0);
+                            tempCtx.scale(-1, 1);
+                        }
+                        tempCtx.drawImage(video, 0, 0);
+
+                        // --- EL RECORTE AUTOMÁTICO ---
+                        const imagenRecortada = await detectarYRecortarDUI(tempCanvas);
+
+                        if (side === 'front') {
+                            capturedDUIFrontBase64 = imagenRecortada;
+                            capturedFrontImg.src = imagenRecortada;
+                            capturedFrontImg.style.display = 'block';
+                            captureFrontButton.style.display = 'block';
+                            captureBackButton.style.display = 'block';
+                        } else {
+                            capturedDUIBackBase64 = imagenRecortada;
+                            capturedBackImg.src = imagenRecortada;
+                            capturedBackImg.style.display = 'block';
+                            captureFrontButton.style.display = 'block';
+                            captureBackButton.style.display = 'block';
+                        }
+                        checkVerificationReadiness();
+                    }
+
+                    function uploadDUI(side, file) {
+                        if (!file) {
+                            if (side === 'front') {
+                                capturedDUIFrontBase64 = null;
+                                uploadedFrontImg.style.display = 'block';
+                                uploadedFrontImg.src = 'images/dui/DUI_BG_F.png';
+                                uploadFrontName.textContent = 'No se eligió ningún archivo';
+                            } else if (side === 'back') {
+                                capturedDUIBackBase64 = null;
+                                uploadedBackImg.style.display = 'block';
+                                uploadedBackImg.src = 'images/dui/DUI_BG_R.png';
+                                uploadBackName.textContent = 'No se eligió ningún archivo';
+                            }
+                            checkVerificationReadiness();
+                            return;
+                        }
+
+                        if (side === 'front') uploadFrontName.textContent = file.name;
+                        else if (side === 'back') uploadBackName.textContent = file.name;
+
+                        const reader = new FileReader();
+                        reader.onload = async function (e) {
+                            const base64Data = e.target.result;
+                            if (side === 'front') {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: `PROCESANDO DUI: ${duiRecibido}`,
+                                    text: 'Espera un momento mientras procesamos la imágen...',
+                                    showConfirmButton: false,
+                                    // scrollbarPadding: false,
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    grow: 'fullscreen',
+                                });
+                                const esValido = await esDUIFrontalValido(base64Data, duiRecibido);
+                                const elMismo = duiRecibido === extractedDui;
+
+                                if (esValido && elMismo) {
+                                    Swal.update({
+                                        icon: 'success',
+                                        title: 'IMAGEN PROCESADA',
+                                        text: 'Tú imagen ha sido cargada con éxito, puedes proceder cargando la parte reversa de tu DUI.',
+                                        showConfirmButton: true,
+                                        confirmButtonText: 'Continuar',
+                                        // scrollbarPadding: false,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false
+                                    })
+                                    capturedDUIFrontBase64 = base64Data;
+                                    uploadedFrontImg.src = base64Data;
+                                    // uploadedFrontImg.style.display = 'block';
+                                } else {
+                                    const duiLength = !(extractedDui.length < 9)
+                                    const titulo = (!elMismo && duiLength) ? '¡ACTIVIDAD SOSPECHOSA!' : 'DUI INVALIDO';
+                                    const mensaje = (!elMismo && duiLength) ? '<h3>Advertencia:</h3>La Ley Especial Contra los Delitos Informáticos y Conexos establece en su artículo 22, “El que suplantare o se apropiare de la identidad de una persona natural o jurídica por medio de las Tecnologías de la Información y la Comunicación, será sancionada con prisión de tres a cinco años”' : 'El formato de DUI que has brindado no corresponde a un DUI válido o intentalo de nuevo.';
+                                    Swal.update({
+                                        icon: 'warning',
+                                        title: titulo,
+                                        html: mensaje,
+                                        showConfirmButton: true,
+                                        confirmButtonText: 'Reintentar'
+                                    });
+                                    uploadFrontInput.value = '';
+                                    uploadFrontName.textContent = 'No se eligió ningún archivo';
+                                    uploadedFrontImg.src = '';
+                                    uploadedFrontImg.style.display = 'block';
+                                }
+                            } else if (side === 'back') {
+                                capturedDUIBackBase64 = base64Data;
+                                uploadedBackImg.src = base64Data;
+                                // uploadedBackImg.style.display = 'block';
+                            }
+                            checkVerificationReadiness();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+
+                    async function esDUIFrontalValido(base64Image, duiEsperado) {
+                        try {
+                            // MATRIZ EXPANDIDA: 20 variantes para cubrir todos los escenarios de luz
+                            const filtros = [
+                                { contrast: 250, brightness: 275 }, // 1. Original
+                                { contrast: 200, brightness: 250 }, // 2. Balanceado
+                                { contrast: 300, brightness: 300 }, // 3. Alto contraste
+                                { contrast: 150, brightness: 200 }, // 4. Luz suave
+                                { contrast: 400, brightness: 350 }, // 5. Agresivo
+                                { contrast: 100, brightness: 150 }, // 6. Natural
+                                { contrast: 250, brightness: 150 }, // 7. Sombras
+                                { contrast: 500, brightness: 400 }, // 8. Extremo
+                                { contrast: 180, brightness: 220 }, // 9. Intermedio
+                                { contrast: 350, brightness: 200 }, // 10. Contraste puro
+                                { contrast: 120, brightness: 100 }, // 11. Grises bajos
+                                { contrast: 600, brightness: 500 }, // 12. Super exposición
+                                { contrast: 250, brightness: 300 }, // 13. Brillo alto
+                                { contrast: 180, brightness: 150 }, // 14. Tenue
+                                { contrast: 300, brightness: 250 }, // 15. Realce de bordes
+                                { contrast: 450, brightness: 100 }, // 16. Muy oscuro (Flash fuerte)
+                                { contrast: 150, brightness: 400 }, // 17. Lavado (Fondo blanco)
+                                { contrast: 280, brightness: 280 }, // 18. Equilibrado II
+                                { contrast: 320, brightness: 350 }, // 19. Estilo Escáner
+                                { contrast: 200, brightness: 120 }  // 20. Penumbra
+                            ];
+
+                            const duiLimpioEsperado = duiEsperado.replace(/\D/g, '');
+
+                            // --- BUCLE DE INTENTOS ---
+                            for (let i = 0; i < filtros.length; i++) {
+                                const config = filtros[i];
+
+                                // Creamos un nuevo worker por cada intento para evitar contaminación de memoria
+                                const worker = await Tesseract.createWorker('spa');
+                                await worker.setParameters({
+                                    tessedit_char_whitelist: '0123456789-',
+                                    tessedit_pageseg_mode: '7',
+                                });
+
+                                const img = new Image();
+                                await new Promise(resolve => { img.src = base64Image; img.onload = resolve; });
+
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+
+                                // Recorte del DUI (Cuadrante inferior izquierdo)
+                                const sw = img.width * 0.35;
+                                const sh = img.height * 0.20;
+                                const sx = 0;
+                                const sy = img.height * 0.85;
+
+                                canvas.width = 1000;
+                                canvas.height = 400;
+
+                                // Aplicamos el filtro de esta iteración
+                                ctx.filter = `contrast(${config.contrast}%) grayscale(100%) brightness(${config.brightness}%)`;
+                                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+                                const { data: { text } } = await worker.recognize(canvas.toDataURL('image/png'));
+                                await worker.terminate(); // Cerramos inmediatamente después de usarlo
+
+                                extractedDui = text.replace(/\D/g, '');
+                                // console.log(`Intento ${i + 1} (${ctx.filter}):`, extractedDui, duiEsperado);
+
+                                // Verificación contra el DUI recibido
+                                if (extractedDui.includes(duiLimpioEsperado)) {
+                                    // console.log("¡ÉXITO! DUI encontrado en intento", i + 1);
+                                    return true;
+                                }
+                            }
+                            // return false;
+                        } catch (error) {
+                            // console.error("Error en validación quirúrgica:", error);
+                            return false;
+                        }
+                    }
+
+                    function toggleCaptureUploadMode() {
+                        capturedDUIFrontBase64 = null;
+                        capturedDUIBackBase64 = null;
+                        yaSeDisparoAccion = false;
+                        livenessPassed = false;
+                        buttonLivenessActive = false;
+                        headPositions = [];
+
+                        capturedFrontImg.style.display = 'block';
+                        capturedBackImg.style.display = 'block';
+                        uploadedBackImg.src = 'images/dui/DUI_BG_R.png'
+                        uploadedFrontImg.style.display = 'block';
+                        uploadedFrontImg.src = 'images/dui/DUI_BG_F.png'
+                        uploadedBackImg.style.display = 'block';
+
+                        uploadFrontInput.value = '';
+                        capturedFrontImg.src = 'images/dui/DUI_BG_F.png'
+                        uploadBackInput.value = '';
+                        capturedBackImg.src = 'images/dui/DUI_BG_R.png'
+                        uploadFrontName.textContent = 'No se eligió ningún archivo';
+                        uploadBackName.textContent = 'No se eligió ningún archivo';
+                        startVerificationButton.style.display = 'block';
+                        let mode = toggleSwitch.getAttribute('data-mode');
+
+                        if (mode === 'upload') {
+                            toggleSwitch.setAttribute("data-mode", 'capture');
+                            // duiToggleImg.setAttribute("src", `images/icon/capture_dui_${sexo.toLowerCase()}.png`);
+                            duiToggleImg.setAttribute("src", `images/icon/capture_dui_m.png`);
+                            captureFrontButton.style.display = 'none';
+                            duiCaptureSection.style.display = 'none';
+                            duiUploadSection.style.display = 'flex';
+                            uploadFrontInput.removeAttribute('disabled');
+                            uploadBackInput.removeAttribute('disabled');
+                        } else {
+                            toggleSwitch.setAttribute("data-mode", 'upload');
+                            duiToggleImg.setAttribute("src", 'images/icon/upload_mode.png');
+                            captureFrontButton.style.display = 'block';
+                            captureBackButton.style.display = 'block';
+                            duiCaptureSection.style.display = 'flex';
+                            duiUploadSection.style.display = 'none';
+                            uploadFrontInput.setAttribute('disabled', true);
+                            uploadBackInput.setAttribute('disabled', true);
+                        }
+                        checkVerificationReadiness();
+                    }
+
+                    function updateStartVerificationButton() {
+                        startVerificationButton.disabled = !(capturedDUIFrontBase64 && capturedDUIBackBase64);
+                        driverSonrie();
+                    }
+
+                    function driverSonrie() {
+                        if (capturedDUIFrontBase64 && capturedDUIBackBase64) {
+                            let instruction = '';
+                            if (RAW_LIVENESS === 'button:head_movement') {
+                                instruction = 'Mira al frente y <b>mueve la cabeza a la izquierda y luego a la derecha</b>. Cuando veas la marca verde, presiona <b>el botón de acción</b>.';
+                            } else if (RAW_LIVENESS === 'button:gesture') {
+                                const gestures = { smile: 'sonreir', surprise: 'expresar sorpresa', mouth_open: 'abrir la boca' };
+                                instruction = `Mira al frente y <b>${gestures[LIVENESS_METHOD] || 'sonreir'}</b>. Cuando veas la marca verde, presiona <b>el botón de acción</b>.`;
+                            } else if (LIVENESS_TYPE === 'head_movement') {
+                                instruction = 'La prueba de vida ya está habilitada. Mira al frente y <b>mueve la cabeza a la izquierda y luego a la derecha</b>.';
+                            } else if (LIVENESS_TYPE === 'smile') {
+                                instruction = 'La prueba de vida ya está habilitada, Mira al frente y <b>sonríe</b>';
+                            } else if (LIVENESS_TYPE === 'surprise') {
+                                instruction = 'La prueba de vida ya está habilitada, Mira al frente y <b>abre los ojos</b> (sorpresa)';
+                            } else if (LIVENESS_TYPE === 'mouth_open') {
+                                instruction = 'La prueba de vida ya está habilitada, Mira al frente y <b>abre la boca</b>';
+                            } else if (LIVENESS_TYPE === 'button') {
+                                instruction = 'La prueba de vida ya está habilitada, presiona el botón de acción cuando estés listo';
+                            }
+                            const driverObj = driver({
+                                showButtons: ['close'],
+                                steps: [{
+                                    popover: {
+                                        title: 'Prueba de vida',
+                                        description: instruction
+                                    }
+                                }]
+                            });
+                            driverObj.drive();
+                        }
+                    }
+
+                    async function startVerification() {
+                        startVerificationButton.disabled = true;
+
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = video.videoWidth;
+                        tempCanvas.height = video.videoHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+                        const webcamImageDataURL = tempCanvas.toDataURL('image/png');
+
+                        const payloadFacial = {
+                            img_webcam: webcamImageDataURL,
+                            img_doc_front: capturedDUIFrontBase64,
+                            img_doc_back: capturedDUIBackBase64,
+                            dui_esperado: duiRecibido, // El que recibimos de Next.js
+                            is_liveness_check_ok: LIVENESS_CHECK_MOCK
+                        };
+
+                        console.log('Payload enviado:', payloadFacial);
+
+                        Swal.fire({
+                            title: 'Verificando identidad',
+                            text: 'Por favor espera un momento...',
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            // scrollbarPadding: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            grow: 'fullscreen',
+                        });
+
+                        try {
+                            const response = await fetchWithRetry(VERIFICATION_ENDPOINT, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payloadFacial)
+                            });
+                            const result = await response.json();
+
+                            if (result.success) {
+                                if (faceInterval) { clearInterval(faceInterval); faceInterval = null; }
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Verificado!',
+                                    text: 'Identidad confirmada con éxito.',
+                                    timer: 2000,
+                                    showConfirmButton: true,
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: true,
+                                    grow: 'fullscreen',
+                                }).then(() => {
+                                    yaSeDisparoAccion = false;
+                                });
+                                // 3. ENVIAR DATOS A REACT (Padre)
+                                // Usamos postMessage para que la página principal se entere
+                                window.parent.postMessage({
+                                    type: 'FACE_VERIFICATION_SUCCESS',
+                                    payload: result.data // Aquí va el MRZ, el token, etc.
+                                }, APP_ORIGIN);
+                            } else {
+                                // statusElement.textContent = `Error: ${result.message}`;
+                                startVerificationButton.disabled = false;
+                                Swal.fire({
+                                    icon: result.icon,
+                                    title: result.title,
+                                    html: result.message,
+                                    confirmButtonText: 'Ok',
+                                    grow: 'fullscreen',
+                                }).then(() => {
+                                    yaSeDisparoAccion = false;
+                                });
+                            }
+                        } catch (error) {
+                            // statusElement.textContent = 'Error de conexión con la API.';
+                            // console.error('Error en startVerification:', error);
+                            startVerificationButton.disabled = false;
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                html: error.message,
+                                confirmButtonText: 'Ok',
+                                grow: 'fullscreen',
+                            }).then(() => {
+                                yaSeDisparoAccion = false;
+                            });
+                        }
+                    }
+
+                    function checkVerificationReadiness() {
+                        updateStartVerificationButton();
+                    }
+                    // Función para enviar la altura al padre
+                    function reportHeight() {
+                        // Calculamos el máximo de varias propiedades para asegurar el valor real
+                        const container = document.getElementById('app-container');
+                        if (container) {// getBoundingClientRect nos da la altura real física del elemento
+                            const height = container.getBoundingClientRect().height;
+                            window.parent.postMessage({
+                                type: 'RESIZE',
+                                height: Math.ceil(height)
+                            }, APP_ORIGIN);
+                        }
+                    }
+                    // Usamos ResizeObserver sobre el contenedor específico
+                    const ro = new ResizeObserver(entries => {
+                        for (let entry of entries) {
+                            reportHeight();
+                        }
+                    });
+
+                    // const appContainer = document.getElementById('app-container');
+                    if (appContainer) {
+                        ro.observe(appContainer);
+                    }
+                    // --- Acceso a la Cámara ---
+                    // Reemplaza el bloque final de navigator.mediaDevices... por este llamado:
+                    iniciarCamara().then(() => {
+                        statusElement.textContent = '⦿';
+                        statusElement.classList.remove('text-warning');
+                        initializeUI();
+                        if (suscriptorConfig && suscriptorConfig.tipo !== 1) {
+                            if (suscriptorConfig.es_demo) {
+                                startDemognitionButton.disabled = false
+                            } else {
+                                startRecognitionButton.disabled = false;
+                            }
+                            captureFrontButton.style.display = 'none';
+                        }
+                        mostrarTutorialInicial();
+                    }).catch(err => {
+                        console.error("Error inicial:", err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo acceder a la cámara.',
+                            grow: 'fullscreen',
+                        });
+                    });
+
+                    // --- FUNCIÓN DE LOGIN TEST (LA NUEVA LÓGICA) ---
+                    // Esta función es la que se activa al dar click al botón dorado
+                    async function sendFrameForLoginTest() {
+                        if (!fotoReferenciaDemo) {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Sube primero una foto en el panel principal',
+                                icon: 'error',
+                                grow: 'fullscreen',
+                            }).then(() => {
+                                yaSeDisparoAccion = false;
+                            });
+                            return;
+                        }
+
+                        Swal.fire({
+                            title: 'Verificando identidad',
+                            text: 'Por favor espera un momento...',
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            // scrollbarPadding: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            grow: 'fullscreen',
+                        });
+
+                        // Capturamos la cámara AQUÍ MISMO
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = video.videoWidth;
+                        tempCanvas.height = video.videoHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(video, 0, 0);
+                        const fotoCamara = tempCanvas.toDataURL('image/jpeg');
+
+                        try {
+                            const response = await fetchWithRetry(DEMOGNITION_ENDPOINT, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    img_webcam: fotoCamara,
+                                    foto_perfil: fotoReferenciaDemo, // La que nos mandó el padre
+                                    is_liveness_check_ok: true
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            // Mandamos el resultado de vuelta al padre para el JsonTree
+                            if (faceInterval) { clearInterval(faceInterval); faceInterval = null; }
+                            window.parent.postMessage({
+                                type: 'FACE_DEMOGNITION_SUCCESS',
+                                payload: data
+                                // }, '*');
+                            }, APP_ORIGIN);
+
+                            Swal.close();
+                            yaSeDisparoAccion = false;
+
+                        } catch (error) {
+                            yaSeDisparoAccion = false;
+                            console.error("Error en demo:", error);
+                        }
+                    }
+                    // --- 1. Definimos la función de envío como una constante accesible dentro del módulo ---
+                    const sendFrameForRecognition = async () => {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = video.videoWidth;
+                        tempCanvas.height = video.videoHeight;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+                        const imageDataURL = tempCanvas.toDataURL('image/png');
+
+                        const payload = {
+                            img_webcam: imageDataURL,
+                            is_liveness_check_ok: LIVENESS_CHECK_MOCK
+                        };
+
+                        Swal.fire({
+                            title: 'Verificando identidad',
+                            text: 'Por favor espera un momento...',
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            // scrollbarPadding: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            grow: 'fullscreen',
+                        });
+
+                        // statusElement.textContent = `Enviando frame (${new Date().toLocaleTimeString()})...`;
+
+                        try {
+                            const response = await fetchWithRetry(RECOGNITION_ENDPOINT, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success && data.match) {
+                                if (faceInterval) { clearInterval(faceInterval); faceInterval = null; }
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Verificado!',
+                                    text: `Identidad confirmada con éxito ${data.label}.`,
+                                    timer: 2000,
+                                    showConfirmButton: false,
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    grow: 'fullscreen',
+                                }).then(() => {
+                                    yaSeDisparoAccion = false;
+                                });
+
+                                // statusElement.textContent = `¡Match Exitoso! Usuario: ${data.label}.`;
+                                startRecognitionButton.disabled = false;
+                                // ENVIAR AL PADRE PARA EL JSONTREE (Esto activa tu SweetAlert en la pantalla de login)
+                                window.parent.postMessage({
+                                    type: 'FACE_RECOGNITION_SUCCESS',
+                                    payload: data.payload
+                                    // }, '*');
+                                }, APP_ORIGIN);
+                            } else {
+                                // Si data.message no existe, usamos un texto por defecto o el status
+                                const errorMsg = data.message || `Error del servidor (${response.status})`;
+                                // statusElement.textContent = `Intento: ${errorMsg}.`;
+                                Swal.fire({
+                                    title: 'Atención',
+                                    text: errorMsg,
+                                    icon: 'warning',
+                                    grow: 'fullscreen',
+                                }).then(() => {
+                                    yaSeDisparoAccion = false;
+                                });
+                                console.warn(`Fallo de reconocimiento: ${errorMsg}`);
+                            }
+                        } catch (error) {
+                            yaSeDisparoAccion = false;
+                            // statusElement.textContent = 'Error de conexión con la API.';
+                            console.error("Error al enviar a la API:", error);
+                        }
+                    };
+                    // --- 2. EXPOSICIÓN GLOBAL PARA EL BOTÓN ---
+                    // Esto resuelve el error "ReferenceError: startRecognition is not defined"
+                    window.startRecognition = async function () {
+                        startRecognitionButton.disabled = true;
+                        await sendFrameForRecognition();
+                        startRecognitionButton.disabled = false;
+                    };
+                    window.startDemognition = async function () {
+                        startDemognitionButton.disabled = true;
+                        await sendFrameForLoginTest();
+                        startDemognitionButton.disabled = false;
+                    };
+                    // AÑADIR startVerification GLOBALMENTE:
+                    window.startVerification = startVerification;
+                    window.manejarAccionPrincipal = manejarAccionPrincipal;
+                    // window.driver = driver;
+                }
+            }
+        }, false);
+    </script>
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'THEME_CHANGE') {
+                const theme = event.data.payload;
+                document.documentElement.setAttribute('data-theme', theme);
+                const container = document.getElementById('app-container');
+                if (theme === 'matrix') {
+                    document.body.style.background = 'transparent';
+                    container.classList.remove('bg-dark', 'bg-light');
+                    container.style.background = 'transparent';
+                } else {
+                    document.body.style.background = '';
+                    container.style.background = '';
+                    if (theme === 'dark') {
+                        container.classList.remove('bg-light');
+                        container.classList.add('bg-dark');
+                    } else {
+                        container.classList.remove('bg-dark');
+                        container.classList.add('bg-light');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

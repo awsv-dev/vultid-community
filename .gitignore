@@ -1,0 +1,53 @@
+# ============================================
+# VULT ID Community - .gitignore
+# ============================================
+
+# --- PRIVATE FILES (no subir al repo community) ---
+# Landing page de planes (solo tu)
+dashboard/plans.html
+# Credenciales y variables de entorno
+.env
+server/.env
+# Config personal
+server/vultid.code-workspace
+server/replace_colors.js
+# Scripts de migracion internos
+server/alter_db.js
+server/alter_db_brute.js
+
+# --- DEPENDENCIES ---
+node_modules/
+server/node_modules/
+package-lock.json
+server/package-lock.json
+
+# --- OS / EDITORS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.code-workspace
+__MACOSX/
+
+# --- DOCKER ---
+docker-compose.override.yml
+
+# --- LOGS ---
+*.log
+logs/
+
+# --- LARGE BINARIES (usar Git LFS si necesitas) ---
+# Modelos ML pesados (~200MB) - subir via Git LFS o CDN
+# server/models/*.bin
+# server/models/*-shard*
+
+# --- TESSERACT DATA (duplicado) ---
+server/eng.traineddata
+
+# --- BUILD ARTIFACTS ---
+dist/
+*.min.js.map

@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VULT ID - Demo Tool</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="jsontree-js/dist/jsontree.js.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════
+           DESIGN SYSTEM - CSS CUSTOM PROPERTIES
+           ══════════════════════════════════════════ */
+        :root {
+            --primary: #21436d;
+            --primary-hover: #1a3657;
+            --accent: #5bfce9;
+            --accent-dim: rgba(91, 252, 233, 0.15);
+            --accent-glow: rgba(91, 252, 233, 0.3);
+            --surface: #ffffff;
+            --surface-alt: #f0f4f8;
+            --surface-raised: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --text-inverse: #ffffff;
+            --bg: #f8fafc;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius: 10px;
+            --radius-sm: 6px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-w: 280px;
+        }
+
+        [data-theme="dark"] {
+            --primary: #5bfce9;
+            --primary-hover: #3de8d5;
+            --accent: #21436d;
+            --accent-dim: rgba(33, 67, 109, 0.3);
+            --accent-glow: rgba(91, 252, 233, 0.15);
+            --surface: #0d1117;
+            --surface-alt: #161b22;
+            --surface-raised: #1c2128;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --text-inverse: #0d1117;
+            --bg: #010409;
+            --code-bg: #0d1117;
+            --code-text: #e6edf3;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ══════════════════════════════════════════
+           RESET & BASE
+           ══════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        a:hover {
+            color: var(--primary);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            background: var(--code-bg);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ══════════════════════════════════════════
+           LAYOUT
+           ══════════════════════════════════════════ */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════════════
+           SIDEBAR
+           ══════════════════════════════════════════ */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform var(--transition), background var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-header img {
+            width: 36px;
+            height: 36px;
+        }
+
+        .sidebar-header .brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-header .version {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: var(--surface-alt);
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px 0;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            padding: 16px 20px 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            margin: 2px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            border: none;
+            background: none;
+            width: calc(100% - 20px);
+            text-align: left;
+        }
+
+        .nav-item:hover {
+            background: var(--accent-dim);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+
+        .nav-item.active svg {
+            stroke: var(--text-inverse);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-item.active .badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-inverse);
+        }
+
+        .nav-sub {
+            padding-left: 48px;
+        }
+
+        .nav-sub .nav-item {
+            padding: 7px 16px;
+            font-size: 0.82rem;
+            margin: 1px 10px;
+        }
+
+        .nav-plans {
+            margin-top: 8px;
+            border: 1px solid var(--accent) !important;
+            background: var(--accent-dim) !important;
+            color: var(--primary) !important;
+            font-weight: 600 !important;
+            animation: plansPulse 3s ease-in-out infinite;
+        }
+
+        .nav-plans:hover {
+            background: var(--accent) !important;
+            color: var(--text-inverse) !important;
+        }
+
+        .nav-plans:hover svg {
+            stroke: var(--text-inverse) !important;
+        }
+
+        @keyframes plansPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(91, 252, 233, 0);
+            }
+
+            50% {
+                box-shadow: 0 0 12px 2px rgba(91, 252, 233, 0.2);
+            }
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        [data-theme="matrix"] {
+            --primary: #00ff41;
+            --primary-hover: #008f11;
+            --surface: #0a0a0a;
+            --surface-alt: #111111;
+            --border: #003b00;
+            --text: #00ff41;
+            --text-muted: #008f11;
+            --text-inverse: #000000;
+            --bg: #000000;
+            --code-bg: #0d0d0d;
+            --code-text: #00ff41;
+            --accent: #00ff41;
+            --accent-dim: rgba(0, 255, 65, 0.1);
+            --accent-glow: rgba(0, 255, 65, 0.3);
+        }
+
+        /* ══════════════════════════════════════════
+           THEME SELECTOR
+           ══════════════════════════════════════════ */
+        .theme-dropdown-btn {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            padding: 8px 12px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all var(--transition);
+        }
+
+        .theme-dropdown-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .theme-menu {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 200;
+        }
+
+        .theme-menu.show {
+            display: flex;
+        }
+
+        .theme-menu-item {
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+
+        .theme-menu-item:hover {
+            background: var(--accent-dim);
+            color: var(--text);
+        }
+
+        .theme-menu-item svg {
+            stroke: currentColor;
+            fill: none;
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            /* Behind everything */
+            display: none;
+            /* Only show in matrix theme */
+        }
+
+        [data-theme="matrix"] #matrix-canvas {
+            display: block;
+        }
+
+        [data-theme="matrix"] .sidebar,
+        [data-theme="matrix"] .hero {
+            background: rgba(10, 10, 10, 0.8);
+            /* Semi-transparent to let canvas show through */
+        }
+
+        .app-content-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Modales (SweetAlert2) Matrix PRO */
+        [data-theme="matrix"] .swal2-popup {
+            background-color: #050505 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2) !important;
+        }
+
+        [data-theme="matrix"] .swal2-title,
+        [data-theme="matrix"] .swal2-html-container,
+        [data-theme="matrix"] .swal2-content {
+            color: #00ff41 !important;
+        }
+
+        [data-theme="matrix"] .swal2-input,
+        [data-theme="matrix"] .swal2-file,
+        [data-theme="matrix"] .swal2-select {
+            background-color: #000000 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+        }
+
+        [data-theme="matrix"] .swal2-confirm,
+        [data-theme="matrix"] .swal2-cancel {
+            background-color: #000000 !important;
+            border: 1px solid #00ff41 !important;
+            color: #00ff41 !important;
+            box-shadow: 0 0 5px rgba(0, 255, 65, 0.5) !important;
+            border-radius: 2px !important;
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+
+        [data-theme="matrix"] .swal2-confirm:hover,
+        [data-theme="matrix"] .swal2-cancel:hover {
+            background-color: #00ff41 !important;
+            color: #000000 !important;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8) !important;
+        }
+
+        /* ══════════════════════════════════════════
+           MAIN CONTENT
+           ══════════════════════════════════════════ */
+        .main {
+            flex: 1;
+            margin-left: var(--sidebar-w);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: margin var(--transition);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ══════════════════════════════════════════
+           HERO / DEMO SECTION
+           ══════════════════════════════════════════ */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 30px;
+            min-height: 520px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .demo-card {
+            position: relative;
+            min-width: 280px;
+            max-width: 720px;
+            width: 100%;
+            aspect-ratio: 85.6 / 53.98;
+            border-radius: 4.5% / 7%;
+            overflow: visible;
+            box-shadow: var(--shadow-lg);
+            transition: box-shadow var(--transition);
+        }
+
+        .demo-card:hover {
+            box-shadow: 0 12px 40px rgba(91, 252, 233, 0.15);
+        }
+
+        .demo-card iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 4.5% / 7%;
+            background: #0d1117;
+        }
+
+        .demo-dimensions {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            background: var(--surface-alt);
+            padding: 3px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        .resizer {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            position: absolute;
+            right: -6px;
+            bottom: -6px;
+            cursor: nwse-resize;
+            border-radius: 50%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resizer svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-inverse);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .resizer:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        /* ══════════════════════════════════════════
+           DOCUMENTATION
+           ══════════════════════════════════════════ */
+        .documentation {
+            padding: 40px 30px 80px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .doc-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .doc-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .doc-header p {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.95rem;
+        }
+
+        .doc-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 30px 0;
+        }
+
+        .doc-section {
+            margin-bottom: 40px;
+            animation: fadeInUp 0.5s ease both;
+        }
+
+        .doc-section:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .doc-section:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .doc-section:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .doc-section h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-section h3 svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--primary);
+            fill: none;
+            stroke-width: 2;
+            flex-shrink: 0;
+        }
+
+        .doc-section p {
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-size: 0.92rem;
+        }
+
+        /* Info boxes */
+        .info-box {
+            background: var(--surface-alt);
+            border-radius: var(--radius);
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+            margin-top: 12px;
+        }
+
+        .info-box.accent {
+            border-left-color: var(--accent);
+        }
+
+        .info-box p {
+            margin: 0;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .info-box ul {
+            color: var(--text-muted);
+            line-height: 1.8;
+            padding-left: 20px;
+            margin: 8px 0 0;
+            font-size: 0.9rem;
+        }
+
+        /* Code blocks with copy button */
+        .code-block {
+            position: relative;
+            background: var(--code-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .code-block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.15);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-block-lang {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .copy-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-family: 'Inter', sans-serif;
+            transition: all var(--transition);
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .copy-btn.copied {
+            border-color: #3fb950;
+            color: #3fb950;
+        }
+
+        .copy-btn svg {
+            width: 13px;
+            height: 13px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: var(--code-text);
+        }
+
+        /* Inline JSON display */
+        .json-display {
+            background: var(--code-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: var(--code-text);
+            overflow-x: auto;
+        }
+
+        /* Tables */
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface-alt);
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-top: 12px;
+            font-size: 0.88rem;
+        }
+
+        .doc-table th {
+            background: var(--surface-raised);
+            color: var(--text);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .doc-table td {
+            padding: 12px 16px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .doc-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .doc-table tr:hover td {
+            background: var(--accent-dim);
+        }
+
+        /* ══════════════════════════════════════════
+           FOOTER
+           ══════════════════════════════════════════ */
+        .footer {
+            margin-top: auto;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        /* ══════════════════════════════════════════
+           HAMBURGER (MOBILE)
+           ══════════════════════════════════════════ */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 200;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .hamburger svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--text);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 90;
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        /* ══════════════════════════════════════════
+           ANIMATIONS
+           ══════════════════════════════════════════ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           RESPONSIVE
+           ══════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.visible {
+                opacity: 1;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .hero {
+                padding: 30px 16px;
+                min-height: 400px;
+            }
+
+            .documentation {
+                padding: 24px 16px 60px;
+            }
+        }
+
+        /* ══════════════════════════════════════════
+           NOTE BOX (for "Nota:" paragraphs)
+           ══════════════════════════════════════════ */
+        .note {
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.88rem;
+            color: var(--text);
+        }
+
+        /* ===== SWEETALERT BACKDROP BLUR ===== */
+        div:where(.swal2-container).swal2-backdrop-show,
+        .swal2-backdrop-show {
+            backdrop-filter: blur(10px) !important;
+            background: rgba(0, 0, 0, 0.6) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- HAMBURGER (MOBILE) -->
+        <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+            <svg viewBox="0 0 24 24">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- ═══════ SIDEBAR ═══════ -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="vultid-icon.svg" alt="VULT ID">
+                <span class="brand">VULT ID</span>
+                <span class="version">v2.0</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-label">Herramientas</div>
+                <button class="nav-item active" vultid-tool-name="login-test"
+                    vultid-tool-id="6efd17c7-295c-4a96-990b-6d4abd28716f">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Login Test
+                    <span class="badge">Demo</span>
+                </button>
+                <div class="nav-sub">
+                    <button class="nav-item active" id="btn-upload-profile">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        Subir Foto Perfil
+                    </button>
+                </div>
+                <button class="nav-item" vultid-tool-name="dui-valid"
+                    vultid-tool-id="24095330-2c7b-451e-a693-01e8a5904bc1">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                    </svg>
+                    DUI Validacion
+                </button>
+
+                <div class="nav-label" style="margin-top:12px;">Sistema</div>
+                <button class="nav-item" id="vultid-refresh" vultid-tool-name="reload-iframe">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="23 4 23 10 17 10" />
+                        <polyline points="1 20 1 14 7 14" />
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                    Recargar Iframe
+                </button>
+                <a class="nav-item" href="admin.html" target="_blank">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    Admin Panel
+                </a>
+                <a class="nav-item nav-plans" href="plans.html">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    Planes
+                    <span class="badge"
+                        style="background:var(--accent);color:var(--text-inverse);font-weight:700;">PRO</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer" style="position: relative;">
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom: 8px;">Tema de Interfaz</div>
+                <button class="theme-dropdown-btn" onclick="toggleThemeMenu(event)">
+                    <div style="display:flex; align-items:center; gap:8px;" id="theme-btn-content">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2"
+                            fill="none">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <span>Oscuro</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="theme-dropdown-menu" class="theme-menu">
+                    <div class="theme-menu-item" onclick="setTheme('light', event)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        Claro
+                    </div>
+                    <div class="theme-menu-item" onclick="setTheme('dark', event)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        Oscuro
+                    </div>
+                    <div class="theme-menu-item" onclick="setTheme('matrix', event)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                        Matrix
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ═══════ MAIN ═══════ -->
+        <main class="main">
+            <!-- HERO / DEMO -->
+            <section class="hero">
+                <div class="demo-card" id="id-card">
+                    <div class="demo-dimensions"><span id="iWidth">720</span>px &times; <span id="iHeight">454</span>px
+                    </div>
+                    <iframe id="vultid-tool" src="http://localhost:8105/6efd17c7-295c-4a96-990b-6d4abd28716f"
+                        allow="camera *;" allowtransparency="true" scrolling="no">
+                    </iframe>
+                    <div class="resizer" id="resizer">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 21 3 21 3 15" />
+                            <line x1="21" y1="3" x2="14" y2="10" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DOCUMENTATION -->
+            <div class="documentation">
+                <div class="doc-header">
+                    <pre>
+=========================================================================================================
+
+                ██╗   ██╗██╗   ██╗██╗  ████████╗██╗██████╗     █████╗  ██╗ ██████╗ ███████╗
+                ██║   ██║██║   ██║██║  ╚══██╔══╝██║██╔══██╗██╗██╔══██╗███║██╔═████╗██╔════╝
+                ██║   ██║██║   ██║██║     ██║   ██║██║  ██║╚═╝╚█████╔╝╚██║██║██╔██║███████╗
+                ╚██╗ ██╔╝██║   ██║██║     ██║   ██║██║  ██║██╗██╔══██╗ ██║████╔╝██║╚════██║
+                 ╚████╔╝ ╚██████╔╝███████╗██║   ██║██████╔╝╚═╝╚█████╔╝ ██║╚██████╔╝███████║
+                  ╚═══╝   ╚═════╝ ╚══════╝╚═╝   ╚═╝╚═════╝     ╚════╝  ╚═╝ ╚═════╝ ╚══════╝
+                                                                                                                                                                                    
+---------------------------------------------------------------------------------------------------------
+                </pre>
+                    <h1>VULT ID: Technical Bridge</h1>
+                    <p>Protocolo de comunicacion asincrona para el motor de Biometria Facial.</p>
+                </div>
+                <hr class="doc-divider">
+
+                <!-- Section 1 -->
+                <div class="doc-section">
+                    <h3>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="8.5" cy="7" r="4" />
+                            <polyline points="17 11 19 13 23 9" />
+                        </svg>
+                        1. Arquitectura del Puente (PostMessage)
+                    </h3>
+                    <p>Debido a las restricciones de seguridad del navegador (Same-Origin Policy), la herramienta opera
+                        dentro de un <code>iframe</code> aislado. El intercambio de informacion se realiza mediante
+                        <strong>PostMessage</strong>, un canal de mensajeria bidireccional seguro que permite cruzar
+                        dominios sin exponer la seguridad del cliente.</p>
+
+                    <div class="info-box">
+                        <p><strong>Como funciona?</strong></p>
+                        <ul>
+                            <li>El <strong>Padre</strong> (tu sitio) "despierta" a la herramienta enviando los datos
+                                iniciales (DUI o Configuracion).</li>
+                            <li>El <strong>Iframe</strong> (VULTID) procesa la biometria y "notifica" al padre mediante
+                                eventos de exito o errores.</li>
+                            <li>Se incluye un canal de <code>RESIZE</code> para garantizar que la interfaz siempre se
+                                ajuste al tamano del contenido interno.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="doc-section">
+                    <h3>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        2. Formato de Respuesta del Servidor (Payload)
+                    </h3>
+                    <p>Para que el flujo de Login sea procesado correctamente, el endpoint de autenticacion debe
+                        devolver un objeto con las siguientes llaves obligatorias:</p>
+
+                    <div class="json-display">
+                        <span style="color:var(--text-muted);">// Estructura Obligatoria</span><br>
+                        {<br>
+                        &nbsp;&nbsp;"id": "A62B904F-8C1D-D3M0-942E-7B5A0C3F91D2",<br>
+                        &nbsp;&nbsp;"nombre_usuario": "aris_vexel",<br>
+                        &nbsp;&nbsp;"nombres": "Aris Elenai",<br>
+                        &nbsp;&nbsp;"apellidos": "Vexel Kaltreem",<br>
+                        &nbsp;&nbsp;<span style="color:var(--accent);">"custom": {</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-muted);">// Cualquier llave adicional
+                            aparecera aqui</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"rol": "administrador",<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"sucursal": "Centro"<br>
+                        &nbsp;&nbsp;<span style="color:var(--accent);">}</span><br>
+                        }
+                    </div>
+                    <div class="note">
+                        <strong>Nota:</strong> Todas las propiedades adicionales enviadas por la API que no sean las 4
+                        obligatorias se agruparan automaticamente dentro del nodo <code>custom</code>.
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="doc-section">
+                    <h3>
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="16 18 22 12 16 6" />
+                            <polyline points="8 6 2 12 8 18" />
+                        </svg>
+                        3. Plantilla Maestra de Integracion
+                    </h3>
+                    <p>Estructura base recomendada para implementar el consumo de la herramienta en cualquier entorno
+                        web:</p>
+
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span class="code-block-lang">HTML + JS</span>
+                            <button class="copy-btn" onclick="copyCode(this)">
+                                <svg viewBox="0 0 24 24">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                                Copiar
+                            </button>
+                        </div>
+                        <pre><code>&lt;!-- A. Contenedor e Iframe --&gt;
+&lt;iframe
+    id="vultid-tool"
+    src="[SERVER_URL]/[UUID_DE_HERRAMIENTA]"
+    allow="camera *;"
+    style="width: 100%; border: none; min-height: 250px; transition: height 0.3s;"&gt;
+&lt;/iframe&gt;
+
+&lt;script&gt;
+    const vultidFrame = document.getElementById('vultid-tool');
+    const VULTID_ORIGIN = "[SERVER_URL]"; // Ej: "http://localhost:8105"
+
+    // B. Activacion (Envio de Datos al Cargar)
+    vultidFrame.onload = function() {
+        vultidFrame.contentWindow.postMessage({
+            type: 'DUI_DATA',
+            payload: { dui: "000000000" }
+        }, "*");
+    };
+
+    // C. Escucha de Respuestas (Bridge de Salida)
+    window.addEventListener('message', function(event) {
+        if (event.origin !== VULTID_ORIGIN) return;
+
+        const { type, height, payload } = event.data;
+
+        // 1. Redimensionado Automatico
+        if (type === 'RESIZE') {
+            vultidFrame.style.height = height + 'px';
+        }
+
+        // 2. Login Intranet (Reconocimiento Facial)
+        if (type === 'FACE_RECOGNITION_SUCCESS') {
+            console.log("Login Exitoso:", payload);
+        }
+
+        // 3. Login Test / Demo
+        if (type === 'FACE_DEMOGNITION_SUCCESS') {
+            console.log("Demo Exitoso:", payload);
+        }
+
+        // 4. Verificacion de DUI
+        if (type === 'FACE_VERIFICATION_SUCCESS') {
+            console.log("DUI Verificado:", payload);
+        }
+    }, false);
+&lt;/script&gt;</code></pre>
+                    </div>
+                </div>
+
+                <!-- Section 4 -->
+                <div class="doc-section">
+                    <h3>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        4. Diccionario de Eventos Estandar
+                    </h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Evento (type)</th>
+                                <th>Direccion</th>
+                                <th>Descripcion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>DUI_DATA</code></td>
+                                <td>Padre &rarr; Iframe</td>
+                                <td>Activa la herramienta enviando el DUI para validacion o modo demo.</td>
+                            </tr>
+                            <tr>
+                                <td><code>UPLOAD_PROFILE_SUCCESS</code></td>
+                                <td>Padre &rarr; Iframe</td>
+                                <td>Inyecta una foto de referencia para el modo <strong>Login Test</strong> (demo).</td>
+                            </tr>
+                            <tr>
+                                <td><code>RESIZE</code></td>
+                                <td>Iframe &rarr; Padre</td>
+                                <td>Notifica la altura del DOM interno. <code>height</code> contiene el valor en
+                                    pixeles.</td>
+                            </tr>
+                            <tr>
+                                <td><code>FACE_RECOGNITION_SUCCESS</code></td>
+                                <td>Iframe &rarr; Padre</td>
+                                <td>Login Intranet: resultado al identificar un rostro en la base de datos.</td>
+                            </tr>
+                            <tr>
+                                <td><code>FACE_DEMOGNITION_SUCCESS</code></td>
+                                <td>Iframe &rarr; Padre</td>
+                                <td>Login Test (demo): resultado al comparar contra la foto de referencia subida.</td>
+                            </tr>
+                            <tr>
+                                <td><code>FACE_VERIFICATION_SUCCESS</code></td>
+                                <td>Iframe &rarr; Padre</td>
+                                <td>DUI Validation: resultado al verificar que el rostro coincide con el DUI procesado.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer class="footer">
+                &copy; 2026 VULT ID &mdash; Biometria Facial Inteligente. Todos los derechos reservados.<br>
+                POWERED BY <a href="https://artywebsv.com" target="_blank"
+                    style="color: var(--accent); font-weight: bold; text-decoration: none;">ARTYWEBSV</a>
+            </footer>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="jsontree-js/dist/jsontree.js"></script>
+    <script>
+        /* ══════════════════════════════════════════
+           THEME SELECTOR & MATRIX CANVAS
+           ══════════════════════════════════════════ */
+        const themeMenu = document.getElementById('theme-dropdown-menu');
+        function toggleThemeMenu(e) {
+            if (e) e.stopPropagation();
+            themeMenu.classList.toggle('show');
+        }
+        document.addEventListener('click', () => {
+            if (themeMenu.classList.contains('show')) themeMenu.classList.remove('show');
+        });
+
+        const themeIcons = {
+            'light': '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+            'dark': '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+            'matrix': '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>'
+        };
+        const themeNames = { 'light': 'Claro', 'dark': 'Oscuro', 'matrix': 'Matrix' };
+
+        function setTheme(themeName, e) {
+            if (e) e.stopPropagation();
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('vultid-theme', themeName);
+
+            // Update Button
+            const btnContent = document.getElementById('theme-btn-content');
+            if (btnContent) {
+                btnContent.innerHTML = themeIcons[themeName] + '<span>' + themeNames[themeName] + '</span>';
+            }
+            themeMenu.classList.remove('show');
+
+            // Send to iframe
+            const iframe = document.getElementById('vultid-tool');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', payload: themeName }, '*');
+            }
+        }
+
+        (function () {
+            const saved = localStorage.getItem('vultid-theme') || 'dark';
+            setTheme(saved);
+        })();
+
+        // MATRIX CANVAS SCRIPT
+        const canvas = document.createElement('canvas');
+        canvas.id = 'matrix-canvas';
+        document.body.prepend(canvas);
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ'.split('');
+        const fontSize = 16;
+        let columns = canvas.width / fontSize;
+        let drops = [];
+        for (let x = 0; x < columns; x++) drops[x] = 1;
+
+        let vultidDrops = [];
+
+        function drawMatrix() {
+            if (document.documentElement.getAttribute('data-theme') !== 'matrix') return;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+
+            // VULTID random drops
+            for (let i = 0; i < vultidDrops.length; i++) {
+                let drop = vultidDrops[i];
+                ctx.fillStyle = '#FFF';
+                for (let j = 0; j < drop.word.length; j++) {
+                    if (drop.y - j >= 0) {
+                        ctx.fillText(drop.word[j], drop.col * fontSize, (drop.y - j) * fontSize);
+                    }
+                }
+                drop.y++;
+                if ((drop.y - drop.word.length) * fontSize > canvas.height) {
+                    vultidDrops.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        setInterval(drawMatrix, 33);
+
+        // Spawn VULTID ~6 times per minute (10% chance every second)
+        setInterval(() => {
+            if (document.documentElement.getAttribute('data-theme') === 'matrix' && Math.random() < 0.1) {
+                columns = canvas.width / fontSize;
+                vultidDrops.push({
+                    col: Math.floor(Math.random() * columns),
+                    y: 0,
+                    word: 'VULTID'.split('').reverse()
+                });
+            }
+        }, 1000);
+
+        /* ══════════════════════════════════════════
+           SIDEBAR TOGGLE (MOBILE)
+           ══════════════════════════════════════════ */
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('visible');
+        }
+
+        /* ══════════════════════════════════════════
+           COPY TO CLIPBOARD
+           ══════════════════════════════════════════ */
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('code');
+            navigator.clipboard.writeText(code.textContent).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Copiado';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar';
+                }, 2000);
+            });
+        }
+
+        /* ══════════════════════════════════════════
+           IFRAME & TOOL LOGIC (preserved)
+           ══════════════════════════════════════════ */
+        let duiDinamico;
+        let iframe = document.getElementById('vultid-tool');
+        const API_BASE_URL = "http://localhost:8105";
+        let uuidTool = null;
+        const btnUploadProfile = document.getElementById('btn-upload-profile');
+        const vultidButton = document.querySelectorAll('.vultid-button');
+        const navItems = document.querySelectorAll('.sidebar-nav .nav-item[vultid-tool-name]');
+        const iWidth = document.getElementById('iWidth');
+        const iHeight = document.getElementById('iHeight');
+        const card = document.getElementById('id-card');
+        const resizer = document.getElementById('resizer');
+        const aspectRatio = 85.6 / 53.98;
+
+        btnUploadProfile.classList.remove('disabled');
+        btnUploadProfile.addEventListener('click', async () => {
+            const { value: file } = await Swal.fire({
+                title: 'Subir Foto de Perfil',
+                input: 'file',
+                inputAttributes: { 'accept': 'image/*' },
+                background: getComputedStyle(document.documentElement).getPropertyValue('--surface-raised').trim(),
+                color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(),
+                confirmButtonText: 'Cargar Referencia',
+            });
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64 = e.target.result;
+                    iframe = document.getElementById('vultid-tool');
+                    if (iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'UPLOAD_PROFILE_SUCCESS',
+                            payload: { foto_perfil: base64 }
+                        }, "*");
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Foto cargada',
+                            text: 'Foto de referencia cargada. Sigue las instrucciones en la herramienta de captura.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        resizer.addEventListener('mousedown', initResize);
+        function initResize(e) {
+            e.preventDefault();
+            const startWidth = card.offsetWidth;
+            const startX = e.clientX;
+            const iframeEl = card.querySelector('iframe') || document.querySelector('iframe');
+            if (iframeEl) iframeEl.style.pointerEvents = 'none';
+
+            function doResize(e) {
+                let newWidth = startWidth + (e.clientX - startX);
+                let newHeight = newWidth / aspectRatio;
+                if (newHeight < 202) { newHeight = 202; newWidth = newHeight * aspectRatio; }
+                else if (newHeight > 454) { newHeight = 454; newWidth = newHeight * aspectRatio; }
+                card.style.width = `${newWidth}px`;
+                card.style.height = `${newHeight}px`;
+                if (iWidth) iWidth.textContent = Math.round(newWidth);
+                if (iHeight) iHeight.textContent = Math.round(newHeight);
+            }
+            function stopResize() {
+                if (iframeEl) iframeEl.style.pointerEvents = 'auto';
+                window.removeEventListener('mousemove', doResize);
+                window.removeEventListener('mouseup', stopResize);
+            }
+            window.addEventListener('mousemove', doResize);
+            window.addEventListener('mouseup', stopResize);
+        }
+
+        /* ═══════ BUTTON HANDLER ═══════ */
+        document.addEventListener('click', async function (event) {
+            const elemento = event.target.closest('[vultid-tool-name]');
+            if (!elemento) return;
+
+            const nameTool = elemento.getAttribute('vultid-tool-name');
+            const esHerramientaDUI = nameTool === "dui-valid";
+            uuidTool = elemento.getAttribute('vultid-tool-id');
+
+            navItems.forEach(button => {
+                if (nameTool !== "reload-iframe") {
+                    duiDinamico = undefined;
+                    button.classList.remove('active');
+                }
+            });
+
+            if (nameTool === "reload-iframe") {
+                const actualSrc = iframe.getAttribute('src');
+                const actualArr = actualSrc.split(/\//);
+                uuidTool = actualArr[actualArr.length - 1];
+            } else {
+                if (nameTool === "login-test") {
+                    btnUploadProfile.classList.remove('disabled');
+                    btnUploadProfile.classList.add('active');
+                } else {
+                    btnUploadProfile.classList.add('disabled');
+                    btnUploadProfile.classList.remove('active');
+                }
+                elemento.classList.toggle('active');
+            }
+
+            if (esHerramientaDUI) {
+                const { value: duiIngresado } = await Swal.fire({
+                    title: 'Validacion de Documento',
+                    text: 'Ingrese el numero de DUI a validar (sin guiones):',
+                    input: 'text',
+                    inputPlaceholder: '000000000',
+                    background: getComputedStyle(document.documentElement).getPropertyValue('--surface-raised').trim(),
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(),
+                    showCancelButton: true,
+                    confirmButtonText: 'Cargar Herramienta',
+                    cancelButtonText: 'Cancelar',
+                    inputValidator: (value) => {
+                        if (!value || value.length < 8) return 'Debes ingresar un numero de DUI valido!';
+                    }
+                });
+                if (duiIngresado) { duiDinamico = duiIngresado; } else { return; }
+            }
+
+            console.log("VULTID: Cambiando herramienta a:", uuidTool);
+            iframe.src = 'about:blank';
+            setTimeout(() => { iframe.src = `${API_BASE_URL}/${uuidTool}`; }, 100);
+        });
+
+        /* ═══════ IFRAME ONLOAD ═══════ */
+        iframe.onload = function () {
+            console.log("VULTID: Despertando herramienta con DUI:", duiDinamico);
+            if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'DUI_DATA', payload: { dui: duiDinamico } }, "*");
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', payload: currentTheme }, "*");
+            }
+        };
+
+        /* ═══════ MESSAGE LISTENER ═══════ */
+        window.addEventListener('message', function (event) {
+            if (event.data.type === 'RESIZE' && event.data.height) {
+                iframe.style.height = event.data.height + 'px';
+            }
+            const successTypes = ['FACE_VERIFICATION_SUCCESS', 'FACE_RECOGNITION_SUCCESS', 'FACE_DEMOGNITION_SUCCESS'];
+            if (successTypes.includes(event.data.type)) {
+                const payloadData = JSON.parse(JSON.stringify(event.data.payload));
+                console.log(event.data.type);
+                const icon = (event.data.payload.match || event.data.payload.documento || event.data.payload.user_info) ? 'success' : 'error';
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: icon,
+                        title: 'RESULTADO: ' + (event.data.type.includes('VERIFICATION') ? 'VERIFICACION DUI' : 'LOGIN'),
+                        grow: 'fullscreen',
+                        background: getComputedStyle(document.documentElement).getPropertyValue('--surface-raised').trim(),
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim(),
+                        html: `<div id="tree-${Date.now()}" style="text-align: left; background: var(--code-bg, #0d1117); padding: 15px; border-radius: 8px;"></div>`,
+                        confirmButtonText: 'Cerrar Terminal',
+                        confirmButtonColor: '#21436d',
+                        didOpen: () => {
+                            const container = Swal.getHtmlContainer().querySelector('[id^="tree-"]');
+                            try {
+                                container.innerHTML = '';
+                                $jsontree.render(container, {
+                                    data: payloadData,
+                                    showObjectSizes: true,
+                                    showLineNumbers: true
+                                });
+                            } catch (err) {
+                                console.error("Error JsonTree:", err);
+                                container.innerHTML = `<pre style="color: #3fb950">${JSON.stringify(payloadData, null, 2)}</pre>`;
+                            }
+                        }
+                    });
+                }, 1000);
+            }
+        }, false);
+    </script>
+</body>
+
+</html>
